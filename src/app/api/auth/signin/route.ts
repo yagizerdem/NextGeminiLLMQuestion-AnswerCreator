@@ -1,8 +1,8 @@
+import { AUTH_TOKEN_MAX_AGE, createAuthToken, getJwtSecret } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
-import { HttpStatusCode } from "@/lib/util";
+import { HttpStatusCode } from "@/lib/utils";
 import User from "@/models/user";
 import { compare } from "bcrypt";
-import { SignJWT } from "jose";
 import { NextResponse } from "next/server";
 import * as z from "zod";
 
@@ -47,10 +47,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET environment variable is not set.");
-  }
+  const secret = getJwtSecret();
 
   await connectToDatabase();
   const user = await User.findOne({ email: parsedBody.data.email }).select(
@@ -63,13 +60,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const maxAge = 7 * 24 * 60 * 60;
-  const token = await new SignJWT()
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(user._id.toString())
-    .setIssuedAt()
-    .setExpirationTime(`${maxAge}s`)
-    .sign(new TextEncoder().encode(secret));
+  const token = await createAuthToken(user._id.toString(), secret);
 
   const response = NextResponse.json({
     message: "Signed in successfully.",
@@ -80,7 +71,7 @@ export async function POST(request: Request) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge,
+    maxAge: AUTH_TOKEN_MAX_AGE,
   });
   return response;
 }

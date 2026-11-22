@@ -12,7 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SignUpDialog } from "@/components/sign-up-dialog";
-import { useState } from "react";
+import { useAuth } from "@/providers/auth-provider";
+import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import * as z from "zod";
+
+const errorResponseSchema = z.object({ message: z.string().optional() });
 
 const features = [
   {
@@ -68,14 +73,52 @@ const exampleExportFormats = [
   { name: "JSON", description: "Structured data for other applications." },
 ];
 
+const userSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  username: z.string(),
+});
+
 export default function Home() {
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function signin() {
+  async function signin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     try {
       setLoading(true);
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data: {
+        message: "Signed in successfully.";
+        user: { id: string; email: string; username: string };
+      } = await response.json();
+      if (!response.ok) {
+        const error = errorResponseSchema.safeParse(data);
+        toast.error(
+          error.success
+            ? error.data.message || "Failed to sign in"
+            : "Failed to sign in",
+        );
+        return;
+      }
+
+      setUser({
+        email: data.user.email,
+        id: data.user.id,
+        username: data.user.username,
+      });
+      setPassword("");
+      toast.success("Successfully signed in");
+    } catch (error) {
+      console.error("Failed to sign in", error);
+      toast.error("Failed to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -141,16 +184,10 @@ export default function Home() {
               Sign in to your account
             </h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Your question workspace will be ready when authentication is
-              available.
+              Sign in to access your question workspace.
             </p>
 
-            <form
-              className="mt-8 space-y-5"
-              onSubmit={(event) => {
-                event.preventDefault();
-              }}
-            >
+            <form className="mt-8 space-y-5" onSubmit={signin}>
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
                   Email address
@@ -181,13 +218,9 @@ export default function Home() {
                   className="h-11"
                 />
               </div>
-              <Button
-                type="submit"
-                className="h-11 w-full"
-                onMouseUp={signin}
-                disabled={loading}
-              >
-                Sign in <ArrowRight aria-hidden="true" className="size-4" />
+              <Button type="submit" className="h-11 w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in"}{" "}
+                <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
             </form>
             <SignUpDialog />

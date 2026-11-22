@@ -1,3 +1,5 @@
+"use client";
+
 import { Brain } from "lucide-react";
 import Link from "next/link";
 import {
@@ -8,10 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/providers/auth-provider";
 
 const languages = ["TR", "EN"];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen w-full flex flex-col">
       <header className="border-b border-border bg-background bg-linear-to-r from-violet-500/10 via-transparent to-sky-500/10 text-foreground">

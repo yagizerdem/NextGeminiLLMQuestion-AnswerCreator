@@ -1,5 +1,5 @@
 import { connectToDatabase } from "@/lib/mongodb";
-import { HttpStatusCode } from "@/lib/util";
+import { HttpStatusCode } from "@/lib/utils";
 import User from "@/models/user";
 import { hash } from "bcrypt";
 import * as z from "zod";

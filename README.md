@@ -10,7 +10,15 @@ Start MongoDB and mongo-express with Docker Compose:
 docker compose up -d
 ```
 
-Add the `MONGODB_URI` from `.env.example` to `.env` (or `.env.local`).
+Set `MONGODB_URI` in `.env` (or `.env.local`) using the MongoDB credentials
+from `compose.yml`. When running Next.js on the host, use port `27018` and
+`authSource=admin`:
+
+```text
+mongodb://<mongo-user>:<mongo-password>@127.0.0.1:27018/<database>?authSource=admin
+```
+
+Restart the development server after changing the environment file.
 The MongoDB connection is established when the application calls
 `connectToDatabase()` from `src/lib/mongodb.ts`.
 

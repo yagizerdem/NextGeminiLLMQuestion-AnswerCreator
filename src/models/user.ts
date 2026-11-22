@@ -17,7 +17,7 @@ const userSchema = new Schema({
     lowercase: true,
   },
   passwordHash: { type: String, required: true, select: false },
-  geminiToken: { type: String, required: true, select: false },
+  geminiToken: { type: String, required: false, select: false },
 });
 
 const User: Model<User> = models.User || model<User>("User", userSchema);

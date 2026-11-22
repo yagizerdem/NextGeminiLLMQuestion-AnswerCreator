@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useEventEmitter } from "@/hooks/use-event-emitter";
 
 interface SignUpOptions {
   username: string;
@@ -21,7 +22,7 @@ interface SignUpOptions {
   password: string;
 }
 
-function SignUpForm() {
+function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [signUpOptions, setSignUpOptions] = useState<SignUpOptions>({
     username: "",
@@ -30,6 +31,9 @@ function SignUpForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const { publishEvent } = useEventEmitter<{ success: boolean }>(
+    "signUpResult",
+  );
 
   useLayoutEffect(() => {
     if (
@@ -50,8 +54,6 @@ function SignUpForm() {
       animation.revert();
     };
   }, []);
-
-  console.log(signUpOptions);
 
   async function handleSubmit(event: React.FormEvent) {
     try {
@@ -75,6 +77,10 @@ function SignUpForm() {
         setErrors(json.errors || []);
         return;
       }
+
+      publishEvent({ success: true });
+      onSuccess();
+      toast.success("Successfully signed up");
     } catch (error) {
       console.error(error);
     } finally {
@@ -171,8 +177,10 @@ function SignUpForm() {
 }
 
 export function SignUpDialog() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
         <DialogTrigger asChild>
@@ -186,7 +194,7 @@ export function SignUpDialog() {
         </DialogTrigger>
       </p>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-linear-to-br from-violet-500/10 via-popover to-sky-500/10 p-6 sm:max-w-md sm:p-8">
-        <SignUpForm />
+        <SignUpForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
