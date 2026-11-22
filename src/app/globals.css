@@ -132,9 +132,13 @@
 
 @media (forced-colors: none) {
   html {
-    --page-scrollbar-thumb: color-mix(in oklab, var(--color-violet-500) 58%, var(--background));
-    --page-scrollbar-thumb-hover: var(--color-violet-500);
-    --page-scrollbar-track: var(--muted);
+    --page-scrollbar-thumb: color-mix(
+      in oklab,
+      var(--muted-foreground) 60%,
+      var(--background)
+    );
+    --page-scrollbar-thumb-hover: var(--muted-foreground);
+    --page-scrollbar-track: var(--background);
     scrollbar-width: thin;
     scrollbar-color: var(--page-scrollbar-thumb) var(--page-scrollbar-track);
   }
@@ -146,7 +150,7 @@
     }
 
     html::-webkit-scrollbar {
-      width: 10px;
+      width: 8px;
     }
 
     html::-webkit-scrollbar-track {
