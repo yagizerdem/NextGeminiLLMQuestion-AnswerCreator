@@ -1,9 +1,17 @@
 "use client";
 
-import { Brain } from "lucide-react";
+import { Brain, ChevronDown, Globe, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -16,11 +24,13 @@ import { useAuth } from "@/providers/auth-provider";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const languages = ["TR", "EN"];
+const languages = [
+  { code: "EN", label: "English" },
+  { code: "TR", label: "T\u00fcrk\u00e7e" },
+];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, setUser } = useAuth();
-  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   async function signOut() {
@@ -68,35 +78,79 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             {user && (
-              <>
-                <span className="text-sm font-medium">{user.username}</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push("/profile")}
-                >
-                  Profile
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isSigningOut}
-                  onClick={signOut}
-                >
-                  {isSigningOut ? "Signing out..." : "Sign out"}
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 gap-2 rounded-full pr-3 pl-1"
+                    aria-label={`Account menu for ${user.username}`}
+                    disabled={isSigningOut}
+                  >
+                    <Avatar size="sm" aria-hidden="true">
+                      <AvatarFallback className="bg-violet-500/15 font-semibold text-violet-700 dark:text-violet-300">
+                        {Array.from(user.username.trim())[0]?.toUpperCase() || (
+                          <UserRound className="size-3.5" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden max-w-32 truncate sm:block">
+                      {user.username}
+                    </span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="size-3.5 text-muted-foreground"
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="wrap-anywhere">
+                    {user.username}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <UserRound aria-hidden="true" className="size-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={isSigningOut}
+                    onSelect={() => void signOut()}
+                  >
+                    <LogOut aria-hidden="true" className="size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <Select defaultValue="EN">
-              <SelectTrigger aria-label="Language">
+              <SelectTrigger
+                aria-label="Language"
+                className="gap-2 rounded-full border-violet-500/20 bg-background px-3 font-medium hover:border-violet-500/40 hover:bg-violet-500/5 data-[size=default]:h-9 dark:bg-background"
+              >
+                <Globe
+                  aria-hidden="true"
+                  className="size-4 text-violet-700 dark:text-violet-300"
+                />
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {languages.map((language) => (
-                  <SelectItem key={language} value={language}>
-                    {language}
+              <SelectContent
+                position="popper"
+                side="bottom"
+                align="end"
+                sideOffset={8}
+                avoidCollisions={false}
+                className="min-w-36 rounded-xl border border-violet-500/15 p-1 shadow-lg ring-0 data-[side=bottom]:translate-y-0 *:data-[position=popper]:h-auto *:data-[position=popper]:min-w-0"
+              >
+                {languages.map(({ code, label }) => (
+                  <SelectItem
+                    key={code}
+                    value={code}
+                    className="rounded-lg py-2 pl-2.5 data-[state=checked]:font-semibold focus:bg-violet-500/10 focus:text-violet-700 dark:focus:text-violet-300"
+                  >
+                    {label}
                   </SelectItem>
                 ))}
               </SelectContent>

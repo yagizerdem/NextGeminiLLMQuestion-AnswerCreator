@@ -297,6 +297,10 @@ export default function Home() {
         />
       )}
       <div className="w-full flex-1 bg-background bg-linear-to-br from-violet-500/10 via-transparent to-emerald-500/10 px-4 py-10 sm:px-6 lg:py-14">
+        <div className="w-3/4 mx-auto">
+          <WelcomeJumbutron />
+        </div>
+        <br />
         <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
           <div className="flex flex-col gap-6 lg:flex-col">
             <section
@@ -781,6 +785,10 @@ function HomePage() {
 
   return (
     <div className="flex w-full flex-1 flex-col items-center bg-background bg-linear-to-br from-violet-500/10 via-transparent to-emerald-500/10 px-4 py-10 sm:px-6 lg:py-14">
+      <div className="w-3/4">
+        <WelcomeJumbutron />
+      </div>
+      <br />
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
         <section className="rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 px-6 py-10 text-card-foreground shadow-xl shadow-violet-500/10 sm:px-10 lg:px-12 lg:py-12">
           <div>
@@ -975,5 +983,30 @@ function HomePage() {
         </ul>
       </section>
     </div>
+  );
+}
+
+function WelcomeJumbutron() {
+  const { user } = useAuth();
+
+  return (
+    <section className="relative isolate overflow-hidden w-full rounded-2xl bg-linear-to-r from-blue-700 via-indigo-700 to-purple-700 px-6 py-6 text-white sm:px-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-32 overflow-hidden"
+      >
+        <span className="absolute -top-10 -right-8 size-32 rounded-full bg-white/10" />
+        <span className="absolute -right-6 -bottom-12 size-24 rounded-full bg-white/10" />
+      </div>
+      <h2 className="wrap-anywhere text-xl font-semibold sm:text-2xl">
+        {user ? `Welcome back, ${user.username}!` : "Welcome!"}{" "}
+        <span aria-hidden="true">&#128075;</span>
+      </h2>
+      <p className="mt-2 text-sm text-white/90">
+        {user
+          ? "Ready for your next question set? Upload a document to get started."
+          : "Create study questions from your documents with AI. Sign in to get started."}
+      </p>
+    </section>
   );
 }

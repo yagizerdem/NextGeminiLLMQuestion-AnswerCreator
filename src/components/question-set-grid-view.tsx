@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, ListChecks } from "lucide-react";
+import {
+  ArrowLeft,
+  Brain,
+  CalendarDays,
+  ExternalLink,
+  Hash,
+  Layers,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +32,7 @@ interface QuestionSetGridViewProps {
 }
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
+  dateStyle: "short",
   timeZone: "UTC",
 });
 
@@ -63,65 +73,90 @@ export function QuestionSetGridView({
               No question sets yet.
             </p>
           ) : (
-            <ul className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <ul className="mx-auto grid max-w-7xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {questionSets.map((questionSet) => {
                 const createdAt = new Date(questionSet.createdAt);
                 const hasValidDate = !Number.isNaN(createdAt.getTime());
+                const model = questionSet.metadata?.aiModel?.trim();
+                const isDeleting = deletingId === questionSet._id;
 
                 return (
                   <li
                     key={questionSet._id}
-                    className="flex min-w-0 flex-col gap-4 rounded-2xl border border-violet-500/15 bg-card p-5 shadow-md shadow-violet-500/10 transition-shadow hover:shadow-lg hover:shadow-violet-500/15"
+                    className="flex min-h-56 min-w-0 flex-col gap-6 rounded-xl border bg-card px-4 py-6 shadow-sm transition-shadow hover:shadow-md sm:px-5"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-700 dark:text-violet-300">
-                        <ListChecks aria-hidden="true" className="size-5" />
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-violet-600 text-white">
+                        <Brain aria-hidden="true" className="size-5" />
                       </span>
                       <div className="min-w-0">
-                        <h3 className="break-words text-base font-semibold">
+                        <h3 className="wrap-anywhere text-sm leading-snug font-semibold">
                           {questionSet.title}
                         </h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Questions: #{questionSet.totalCount}
-                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarDays aria-hidden="true" className="size-3" />
+                            {hasValidDate ? (
+                              <time dateTime={createdAt.toISOString()}>
+                                {dateFormatter.format(createdAt)}
+                              </time>
+                            ) : (
+                              "Date unavailable"
+                            )}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Hash aria-hidden="true" className="size-3" />
+                            {questionSet.totalCount}{" "}
+                            {questionSet.totalCount === 1
+                              ? "question"
+                              : "questions"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CalendarDays aria-hidden="true" className="size-4" />
-                      {hasValidDate ? (
-                        <>
-                          Created:{" "}
-                          <time dateTime={createdAt.toISOString()}>
-                            {dateFormatter.format(createdAt)}
-                          </time>
-                        </>
-                      ) : (
-                        "Creation date unavailable"
-                      )}
-                    </p>
                     <div className="mt-auto flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge
+                          variant="secondary"
+                          title={model}
+                          className="bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                        >
+                          <Sparkles aria-hidden="true" className="size-3" />
+                          AI Generated
+                          {model && <span className="sr-only"> ({model})</span>}
+                        </Badge>
+                        {questionSet.metadata?.ragEnabled === true && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                          >
+                            <Layers aria-hidden="true" className="size-3" />
+                            RAG Enhanced
+                          </Badge>
+                        )}
+                      </div>
                       <Button
                         type="button"
-                        className="group h-10 w-full bg-linear-to-r from-violet-600 to-blue-500 font-semibold text-white shadow-sm hover:from-violet-700 hover:to-blue-600"
+                        className="w-full bg-linear-to-r from-violet-700 to-blue-700 font-semibold text-white hover:from-violet-800 hover:to-blue-800"
                         onClick={() => setSelectedId(questionSet._id)}
                       >
-                        View
-                        <ArrowRight
-                          aria-hidden="true"
-                          className="size-4 transition-transform group-hover:translate-x-1"
-                        />
+                        <ExternalLink aria-hidden="true" className="size-4" />
+                        View Details
                       </Button>
                       <Button
                         type="button"
                         variant="destructive"
-                        className="h-10 w-full border-destructive/20"
-                        aria-label={`Delete ${questionSet.title}`}
+                        className="w-full border-destructive/20"
+                        aria-label={
+                          isDeleting
+                            ? `Deleting ${questionSet.title}`
+                            : `Delete ${questionSet.title}`
+                        }
                         disabled={isRefreshing || deletingId !== null}
                         onClick={() => onDelete(questionSet)}
                       >
-                        {deletingId === questionSet._id
-                          ? "Deleting..."
-                          : "Delete"}
+                        <Trash2 aria-hidden="true" className="size-4" />
+                        {isDeleting ? "Deleting..." : "Delete"}
                       </Button>
                     </div>
                   </li>

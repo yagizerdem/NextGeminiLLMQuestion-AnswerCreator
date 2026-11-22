@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Download, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
+import { QuestionSetMetadata } from "@/components/question-set-metadata";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -450,6 +451,15 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
             {questionSet === null && (
               <div role="alert" className="space-y-3">
                 <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+            {questionSet && (
+              <div className="mb-6">
+                <QuestionSetMetadata
+                  totalCount={questionSet.totalCount}
+                  createdAt={questionSet.createdAt}
+                  metadata={questionSet.metadata}
+                />
               </div>
             )}
             {questionSet && questionSet.questions.length === 0 && (
