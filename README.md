@@ -47,6 +47,29 @@ and may be outdated. Files without a page count return `pages: 0`. Markdown is
 returned as source text; scanned PDFs require OCR.
 Call `cleanText` to normalize line breaks and remove control characters and
 excess blank lines before chunking; parsing does not clean text automatically.
+`RagService.index` splits text asynchronously into chunks of up to 1,000
+characters with no overlap. Each chunk includes its document ID, filename
+and index, and uses the document ID and index as its stable ID.
+`SimpleVectorStore.addDocuments` generates retrieval-document embeddings with
+Gemini's `gemini-embedding-001`, falling back to `gemini-embedding-2` on model
+availability, quota or server errors. When switching models, it re-embeds all
+stored documents to keep vectors compatible, which can incur additional API
+usage. `embeddingModel` identifies the model to use for search queries. Document
+text is sent to Gemini; embeddings are not persisted between instances or restarts.
+`similaritySearch` embeds the query with the stored model and returns up to
+`topK` chunks ordered by cosine similarity. If that model is unavailable, the
+search fails rather than comparing embeddings from incompatible models.
+`RagService.generateQuestionWitRag` uses retrieved chunks to generate open-ended
+questions in batches with Gemini. It validates the response and checks that
+source excerpts appear in the supplied chunks; this does not independently verify
+the correctness of the generated answers or scores. Document text is sent to
+Gemini. Multiple-choice options are empty and `distractor_quality_score` is `0`
+because distractors do not apply. This method is not yet called by the questions
+endpoint.
+
+Question requests use the user's Gemini API key when available, otherwise
+`GEMINI_API_KEY` from the server environment. A model-list request checks the
+key's access before processing; it does not guarantee access to a specific model.
 
 First, run the development server:
 

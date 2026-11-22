@@ -109,7 +109,7 @@ export default function Home() {
     try {
       setIsGenerating(true);
 
-      const response = await fetch("/api/questions", {
+      const response = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,6 +120,7 @@ export default function Home() {
           questionCount,
         }),
       });
+      console.log(response);
 
       if (!response.ok) {
         toast.error("Failed to generate questions.");
