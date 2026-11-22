@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocalization } from "@/providers/localization-provider";
+import { getAuthErrorKey } from "@/lib/localize-auth-error";
 import {
   ArrowRight,
   CircleCheck,
@@ -65,6 +67,7 @@ interface Stats {
 }
 
 export default function Home() {
+  const { language, t } = useLocalization();
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -87,17 +90,17 @@ export default function Home() {
 
   async function uploadDocument() {
     if (!user) {
-      toast.error("Please sign in to upload a document.");
+      toast.error(t("signInToUpload"));
       return;
     }
 
     if (!file) {
-      toast.error("Please select a file to upload.");
+      toast.error(t("selectFileToUpload"));
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File must not exceed 10 MiB.");
+      toast.error(t("fileTooLarge"));
       return;
     }
 
@@ -111,16 +114,16 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        toast.error("Failed to upload document.");
+        toast.error(t("uploadFailed"));
         return;
       }
 
       const data: { document: Document } = await response.json();
       setDocument(data.document);
-      toast.success("Document uploaded successfully");
+      toast.success(t("uploadSuccess"));
     } catch (error) {
       console.error("Failed to upload document", error);
-      toast.error("Failed to upload document. Please try again.");
+      toast.error(t("uploadRetry"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -144,7 +147,7 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        toast.error("Failed to generate questions.");
+        toast.error(t("generationFailed"));
         return;
       }
 
@@ -153,7 +156,7 @@ export default function Home() {
       setQuestionSets((prev) => [data.questionSet, ...prev]);
     } catch (error) {
       console.error("Failed to generate questions", error);
-      toast.error("Failed to generate questions. Please try again.");
+      toast.error(t("generationRetry"));
     } finally {
       setIsGenerating(false);
     }
@@ -179,7 +182,7 @@ export default function Home() {
       setQuestionSets(data.questionSets);
     } catch (error) {
       console.error("Failed to refresh question sets", error);
-      toast.error("Failed to refresh question sets. Please try again.");
+      toast.error(t("refreshQuestionSetsFailed"));
     } finally {
       setIsRefreshing(false);
     }
@@ -200,10 +203,10 @@ export default function Home() {
         previous.filter((item) => item._id !== questionSet._id),
       );
       setQuestionSetToDelete(null);
-      toast.success("Question set deleted.");
+      toast.success(t("questionSetDeleted"));
     } catch (error) {
       console.error("Failed to delete question set", error);
-      toast.error("Failed to delete question set. Please try again.");
+      toast.error(t("questionSetDeleteFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -251,10 +254,9 @@ export default function Home() {
           }}
         >
           <DialogHeader>
-            <DialogTitle>Delete question set?</DialogTitle>
+            <DialogTitle>{t("deleteQuestionSet")}</DialogTitle>
             <DialogDescription>
-              Delete &quot;{questionSetToDelete?.title}&quot;? This action
-              cannot be undone.
+              {t("confirmDeleteQuestionSet", { title: questionSetToDelete?.title ?? "" })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -264,7 +266,7 @@ export default function Home() {
               disabled={deletingId !== null}
               onClick={() => setQuestionSetToDelete(null)}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -276,7 +278,7 @@ export default function Home() {
                 }
               }}
             >
-              {deletingId ? "Deleting..." : "Delete"}
+              {deletingId ? t("deleting") : t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -311,10 +313,10 @@ export default function Home() {
                 <FileUp aria-hidden="true" className="size-5" />
               </div>
               <h1 id="upload-document-title" className="text-2xl font-semibold">
-                Upload a document
+                {t("uploadHeading")}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Choose a document to add to your workspace.
+                {t("uploadDescription")}
               </p>
               <label
                 htmlFor="document-file"
@@ -356,16 +358,16 @@ export default function Home() {
                   role="status"
                 >
                   {isUploading
-                    ? "Uploading..."
+                    ? t("uploading")
                     : file
                       ? file.name
-                      : "Choose a document"}
+                      : t("chooseDocument")}
                 </span>
                 <p
                   id="document-file-help"
                   className="text-xs text-muted-foreground"
                 >
-                  PDF, DOCX, Markdown or TXT, up to 10 MiB.
+                  {t("fileTypesHint")}
                 </p>
               </label>
               <br />
@@ -378,7 +380,7 @@ export default function Home() {
                 id="configure-generation-title"
                 className="text-lg font-semibold"
               >
-                Configure generation
+                {t("configureGeneration")}
               </h2>
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div className="min-w-0 space-y-2">
@@ -386,7 +388,7 @@ export default function Home() {
                     htmlFor="question-level"
                     className="text-sm font-medium"
                   >
-                    Question level
+                    {t("questionLevel")}
                   </label>
                   <Select
                     name="difficulty"
@@ -394,13 +396,13 @@ export default function Home() {
                     onValueChange={(value) => setDifficulty(value as any)}
                   >
                     <SelectTrigger id="question-level" className="w-full">
-                      <SelectValue placeholder="Select level" />
+                      <SelectValue placeholder={t("selectLevel")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                      <SelectItem value="expert">Expert</SelectItem>
+                      <SelectItem value="easy">{t("easy")}</SelectItem>
+                      <SelectItem value="medium">{t("medium")}</SelectItem>
+                      <SelectItem value="hard">{t("hard")}</SelectItem>
+                      <SelectItem value="expert">{t("expert")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -409,7 +411,7 @@ export default function Home() {
                     htmlFor="question-count"
                     className="text-sm font-medium"
                   >
-                    Question count
+                    {t("questionCount")}
                   </label>
                   <Input
                     id="question-count"
@@ -423,7 +425,7 @@ export default function Home() {
                       const value = event.currentTarget.valueAsNumber;
                       setQuestionCount(Number.isNaN(value) ? "" : value);
                     }}
-                    placeholder="e.g. 10"
+                    placeholder={t("questionCountExample")}
                   />
                 </div>
               </div>
@@ -434,7 +436,7 @@ export default function Home() {
                   className="mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
                   onMouseUp={uploadDocument}
                 >
-                  Upload Document
+                  {t("uploadDocument")}
                 </Button>
               )}
 
@@ -450,14 +452,14 @@ export default function Home() {
                     document == null
                   }
                 >
-                  Generate Questions
+                  {t("generateQuestions")}
                 </Button>
               )}
             </section>
             <section aria-labelledby="question-sets-title">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 id="question-sets-title" className="text-lg font-semibold">
-                  Question sets
+                  {t("questionSets")}
                 </h2>
                 <Button
                   type="button"
@@ -469,7 +471,7 @@ export default function Home() {
                     aria-hidden="true"
                     className={isRefreshing ? "animate-spin" : ""}
                   />
-                  {isRefreshing ? "Refreshing..." : "Refresh"}
+                  {isRefreshing ? t("refreshing") : t("refresh")}
                 </Button>
               </div>
               <ul className="flex flex-col gap-3">
@@ -486,11 +488,11 @@ export default function Home() {
                         {questionSet.title}
                       </h3>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Question set
+                        {t("questionSet")}
                       </p>
                     </div>
                     <span className="shrink-0 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                      {questionSet.totalCount} questions
+                      {t(questionSet.totalCount === 1 ? "questionCountOne" : "questionCountMany", { count: questionSet.totalCount })}
                     </span>
                     <Button
                       type="button"
@@ -498,19 +500,19 @@ export default function Home() {
                       size="sm"
                       onClick={() => setQuestionSetDisplayId(questionSet._id)}
                     >
-                      View
+                      {t("view")}
                     </Button>
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      aria-label={`Delete ${questionSet.title}`}
+                      aria-label={t("deleteNamed", { title: questionSet.title })}
                       disabled={isRefreshing || deletingId !== null}
                       onClick={() => setQuestionSetToDelete(questionSet)}
                     >
                       {deletingId === questionSet._id
-                        ? "Deleting..."
-                        : "Delete"}
+                        ? t("deleting")
+                        : t("delete")}
                     </Button>
                   </li>
                 ))}
@@ -518,7 +520,7 @@ export default function Home() {
               <div className="mt-4 flex items-center justify-between gap-3">
                 {questionSets.length > 10 && (
                   <p className="text-sm text-muted-foreground">
-                    Showing 10 of {questionSets.length} question sets
+                    {t("showingQuestionSets", { visible: 10, total: questionSets.length })}
                   </p>
                 )}
                 <Button
@@ -527,7 +529,7 @@ export default function Home() {
                   onClick={() => setShowQuestionSetGridView(true)}
                   className="cursor-pointer group mx-auto h-11 w-3/4 rounded-xl border-violet-500/25 bg-card font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
                 >
-                  View all
+                  {t("viewAll")}
                   <ArrowRight
                     aria-hidden="true"
                     className="size-4 transition-transform group-hover:translate-x-1"
@@ -548,10 +550,10 @@ export default function Home() {
                 id="generation-details-title"
                 className="text-lg font-semibold"
               >
-                Generation details
+                {t("generationDetails")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                A quick overview of your question workspace.
+                {t("workspaceOverview")}
               </p>
               <dl className="mt-5 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
@@ -560,7 +562,7 @@ export default function Home() {
                       aria-hidden="true"
                       className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
                     />
-                    AI engine
+                    {t("aiEngine")}
                   </dt>
                   <dd className="text-right font-medium text-violet-700 dark:text-violet-300">
                     Gemini 3.5 Flash Lite
@@ -572,9 +574,9 @@ export default function Home() {
                       aria-hidden="true"
                       className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
                     />
-                    Processing speed
+                    {t("processingSpeed")}
                   </dt>
-                  <dd className="text-right font-medium">Varies by document</dd>
+                  <dd className="text-right font-medium">{t("variesByDocument")}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
                   <dt className="flex items-center gap-2 text-muted-foreground">
@@ -582,7 +584,7 @@ export default function Home() {
                       aria-hidden="true"
                       className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
                     />
-                    Export formats
+                    {t("exportFormats")}
                   </dt>
                   <dd className="rounded-full bg-sky-500/10 px-2.5 py-1 text-right text-xs font-medium text-sky-700 dark:text-sky-300">
                     JSON, CSV, PDF
@@ -594,7 +596,7 @@ export default function Home() {
                       aria-hidden="true"
                       className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
                     />
-                    Input formats
+                    {t("inputFormats")}
                   </dt>
                   <dd className="text-right font-medium">
                     PDF, DOCX, Markdown, TXT
@@ -607,12 +609,12 @@ export default function Home() {
               className="h-fit rounded-3xl border border-sky-500/20 bg-card bg-linear-to-br from-sky-500/10 via-transparent to-emerald-500/10 p-3 text-card-foreground shadow-xl shadow-sky-500/10"
             >
               <h2 id="workspace-stats-title" className="text-lg font-semibold">
-                Quick Stats
+                {t("quickStats")}
               </h2>
               <dl className="mt-3 space-y-1">
                 <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
                   <dt className="text-xs text-muted-foreground">
-                    Total questions
+                    {t("totalQuestions")}
                   </dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
                     {stats.totalQuestions}
@@ -620,7 +622,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
                   <dt className="text-xs text-muted-foreground">
-                    Processed documents
+                    {t("processedDocuments")}
                   </dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
                     {stats.totalProcessedDocs}
@@ -628,24 +630,24 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
                   <dt className="text-xs text-muted-foreground">
-                    Question sets
+                    {t("questionSets")}
                   </dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
                     {stats.totalQuestionSets}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                  <dt className="text-xs text-muted-foreground">Sessions</dt>
+                  <dt className="text-xs text-muted-foreground">{t("sessions")}</dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
                     {stats.totalSessions}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
                   <dt className="text-xs text-muted-foreground">
-                    Average questions per session
+                    {t("averageQuestions")}
                   </dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
-                    {stats.avgQuestionsPerSession.toFixed(1)}
+                    {stats.avgQuestionsPerSession.toLocaleString(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                   </dd>
                 </div>
               </dl>
@@ -658,17 +660,17 @@ export default function Home() {
                 <Lightbulb aria-hidden="true" className="size-5" />
               </div>
               <h2 id="pro-tips-title" className="text-lg font-semibold">
-                Pro tips
+                {t("proTips")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Get more out of your question sets.
+                {t("proTipsDescription")}
               </p>
               <ul className="mt-5 space-y-3">
                 {[
-                  "Use clear, well-structured documents to give the AI useful context.",
-                  "Choose a difficulty level that matches your learning goals.",
-                  "Keep uploads under 10 MiB and use PDF, DOCX, Markdown, or TXT.",
-                  "Review generated questions and answers against your source material.",
+                  t("tipClearDocuments"),
+                  t("tipDifficulty"),
+                  t("tipUploadLimits"),
+                  t("tipReviewAnswers"),
                 ].map((tip) => (
                   <li
                     key={tip}
@@ -693,57 +695,58 @@ export default function Home() {
 const features = [
   {
     icon: Sparkles,
-    title: "RAG-powered exam generation",
-    description: "Create questions grounded in your own source material.",
+    title: "ragExamGeneration",
+    description: "sourceGroundedQuestions",
   },
   {
     icon: FileUp,
-    title: "Bring your documents",
-    description: "Upload PDF, Markdown, DOCX, and TXT files.",
+    title: "bringDocuments",
+    description: "supportedFormats",
   },
   {
     icon: ListChecks,
-    title: "Professional question sets",
-    description: "Turn your content into structured, ready-to-use questions.",
+    title: "professionalQuestionSets",
+    description: "structuredQuestions",
   },
   {
     icon: FileStack,
-    title: "Multiple export options",
-    description: "Take your question sets wherever you need them.",
+    title: "multipleExportOptions",
+    description: "takeQuestionSets",
   },
   {
     icon: ShieldCheck,
-    title: "Secure authentication",
-    description: "A dedicated space for your work.",
+    title: "secureAuthentication",
+    description: "dedicatedWorkspace",
   },
-];
+] as const;
 
 const steps = [
   {
-    title: "Upload your documents",
+    title: "uploadYourDocuments",
     description:
-      "Start with your learning materials in a supported file format.",
+      "supportedLearningMaterials",
   },
   {
-    title: "Generate your questions",
-    description: "Create a question set grounded in the content you provide.",
+    title: "generateYourQuestions",
+    description: "groundQuestionSet",
   },
   {
-    title: "Review and export",
-    description: "Review your questions and take them with you.",
+    title: "reviewAndExport",
+    description: "reviewYourQuestions",
   },
-];
+] as const;
 
 const exportFormats = [
   {
     name: "PDF",
-    description: "A shareable document for reading and printing.",
+    description: "pdfDescription",
   },
-  { name: "CSV", description: "A spreadsheet of questions and answers." },
-  { name: "JSON", description: "Structured data for other applications." },
-];
+  { name: "CSV", description: "csvDescription" },
+  { name: "JSON", description: "jsonDescription" },
+] as const;
 
 function HomePage() {
+  const { t } = useLocalization();
   const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -760,11 +763,11 @@ function HomePage() {
       });
 
       const data: {
-        message: "Signed in successfully.";
+        message: string;
         user: { id: string; email: string; username: string };
       } = await response.json();
       if (!response.ok) {
-        toast.error("Failed to sign in");
+        toast.error(t(getAuthErrorKey(data.message, "signInFailed")));
         return;
       }
 
@@ -774,10 +777,10 @@ function HomePage() {
         username: data.user.username,
       });
       setPassword("");
-      toast.success("Successfully signed in");
+      toast.success(t("signedIn"));
     } catch (error) {
       console.error("Failed to sign in", error);
-      toast.error("Failed to sign in. Please try again.");
+      toast.error(t("signInRetry"));
     } finally {
       setLoading(false);
     }
@@ -794,18 +797,17 @@ function HomePage() {
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-300">
               <Sparkles aria-hidden="true" className="size-3.5" />
-              YOUR AI QUESTION WORKSPACE
+              {t("aiWorkspace")}
             </div>
             <h1 className="max-w-md text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-              Your documents.
+              {t("yourDocuments")}
               <br />
               <span className="bg-linear-to-r from-violet-700 via-indigo-600 to-teal-700 bg-clip-text text-transparent dark:from-violet-300 dark:via-sky-300 dark:to-emerald-300">
-                Better questions.
+                {t("betterQuestions")}
               </span>
             </h1>
             <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-              Transform your materials into thoughtful questions and exams, with
-              everything you need in one place.
+              {t("landingDescription")}
             </p>
 
             <ul className="mt-9 space-y-5">
@@ -815,16 +817,16 @@ function HomePage() {
                     <Icon aria-hidden="true" className="size-5" />
                   </span>
                   <div>
-                    <h2 className="text-sm font-semibold">{title}</h2>
+                    <h2 className="text-sm font-semibold">{t(title)}</h2>
                     <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                      {description}
+                      {t(description)}
                     </p>
                   </div>
                 </li>
               ))}
             </ul>
             <p className="mt-8 text-xs text-muted-foreground">
-              Features are in development.
+              {t("featuresInDevelopment")}
             </p>
           </div>
         </section>
@@ -838,27 +840,27 @@ function HomePage() {
               <LockKeyhole aria-hidden="true" className="size-5" />
             </div>
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">
-              Welcome back
+              {t("welcomeBack")}
             </p>
             <h2
               id="sign-in-title"
               className="mt-2 text-3xl font-semibold tracking-tight"
             >
-              Sign in to your account
+              {t("signInAccount")}
             </h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Sign in to access your question workspace.
+              {t("signInWorkspace")}
             </p>
 
             <form className="mt-8 space-y-5" onSubmit={signin}>
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Email address
+                  {t("emailAddress")}
                 </label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("emailExample")}
                   autoComplete="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -868,12 +870,12 @@ function HomePage() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {t("password")}
                 </label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={t("enterPassword")}
                   autoComplete="current-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -882,7 +884,7 @@ function HomePage() {
                 />
               </div>
               <Button type="submit" className="h-11 w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign in"}{" "}
+                {loading ? t("signingIn") : t("signIn")}{" "}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
             </form>
@@ -898,10 +900,10 @@ function HomePage() {
           id="why-choose-title"
           className="text-center text-2xl font-semibold tracking-tight"
         >
-          Why choose our platform
+          {t("whyChoose")}
         </h2>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          Designed to make creating questions from your materials simpler.
+          {t("whyChooseDescription")}
         </p>
         <ul className="mt-7 flex flex-col gap-4 md:flex-row">
           {features.slice(0, 3).map(({ icon: Icon, title, description }) => (
@@ -912,9 +914,9 @@ function HomePage() {
               <span className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
                 <Icon aria-hidden="true" className="size-5" />
               </span>
-              <h3 className="mt-4 font-semibold">{title}</h3>
+              <h3 className="mt-4 font-semibold">{t(title)}</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {description}
+                {t(description)}
               </p>
             </li>
           ))}
@@ -928,10 +930,10 @@ function HomePage() {
           id="how-it-works-title"
           className="text-center text-2xl font-semibold tracking-tight"
         >
-          How it works
+          {t("howItWorks")}
         </h2>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          From your documents to a question set in three steps.
+          {t("threeSteps")}
         </p>
         <ol className="mt-7 flex flex-col gap-4 md:flex-row">
           {steps.map((step, index) => (
@@ -942,9 +944,9 @@ function HomePage() {
               <span className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-sky-500/20 to-emerald-500/20 text-sm font-semibold text-sky-700 dark:text-sky-300">
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <h3 className="mt-4 font-semibold">{step.title}</h3>
+              <h3 className="mt-4 font-semibold">{t(step.title)}</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {step.description}
+                {t(step.description)}
               </p>
             </li>
           ))}
@@ -959,10 +961,10 @@ function HomePage() {
           id="export-formats-title"
           className="text-center text-2xl font-semibold tracking-tight"
         >
-          Multiple export formats
+          {t("multipleExportFormats")}
         </h2>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          Download your question sets in your preferred format.
+          {t("downloadPreferred")}
         </p>
         <ul className="mt-7 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           {exportFormats.map((format) => (
@@ -976,7 +978,7 @@ function HomePage() {
               />
               <h3 className="mt-4 font-semibold">{format.name}</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {format.description}
+                {t(format.description)}
               </p>
             </li>
           ))}
@@ -987,6 +989,7 @@ function HomePage() {
 }
 
 function WelcomeJumbutron() {
+  const { t } = useLocalization();
   const { user } = useAuth();
 
   return (
@@ -999,13 +1002,13 @@ function WelcomeJumbutron() {
         <span className="absolute -right-6 -bottom-12 size-24 rounded-full bg-white/10" />
       </div>
       <h2 className="wrap-anywhere text-xl font-semibold sm:text-2xl">
-        {user ? `Welcome back, ${user.username}!` : "Welcome!"}{" "}
+        {user ? t("welcomeNamed", { username: user.username }) : t("welcome")}{" "}
         <span aria-hidden="true">&#128075;</span>
       </h2>
       <p className="mt-2 text-sm text-white/90">
         {user
-          ? "Ready for your next question set? Upload a document to get started."
-          : "Create study questions from your documents with AI. Sign in to get started."}
+          ? t("welcomeMember")
+          : t("welcomeGuest")}
       </p>
     </section>
   );

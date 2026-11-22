@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocalization } from "@/providers/localization-provider";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -31,11 +32,6 @@ interface QuestionSetGridViewProps {
   isRefreshing: boolean;
 }
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "short",
-  timeZone: "UTC",
-});
-
 export function QuestionSetGridView({
   questionSets,
   onClose,
@@ -43,6 +39,11 @@ export function QuestionSetGridView({
   deletingId,
   isRefreshing,
 }: QuestionSetGridViewProps) {
+  const { language, t } = useLocalization();
+  const dateFormatter = new Intl.DateTimeFormat(language, {
+    dateStyle: "short",
+    timeZone: "UTC",
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
@@ -56,21 +57,21 @@ export function QuestionSetGridView({
             onClick={onClose}
           >
             <ArrowLeft aria-hidden="true" className="size-4" />
-            Back
+            {t("back")}
           </Button>
           <div className="min-w-0 space-y-1">
             <DialogTitle className="text-xl font-semibold">
-              All question sets
+              {t("allQuestionSets")}
             </DialogTitle>
             <DialogDescription>
-              {questionSets.length} question sets
+              {t("questionSetCount", { count: questionSets.length })}
             </DialogDescription>
           </div>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           {questionSets.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No question sets yet.
+              {t("noQuestionSets")}
             </p>
           ) : (
             <ul className="mx-auto grid max-w-7xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,10 +107,7 @@ export function QuestionSetGridView({
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <Hash aria-hidden="true" className="size-3" />
-                            {questionSet.totalCount}{" "}
-                            {questionSet.totalCount === 1
-                              ? "question"
-                              : "questions"}
+                            {t(questionSet.totalCount === 1 ? "questionCountOne" : "questionCountMany", { count: questionSet.totalCount })}
                           </span>
                         </div>
                       </div>
@@ -122,7 +120,7 @@ export function QuestionSetGridView({
                           className="bg-blue-500/10 text-blue-700 dark:text-blue-300"
                         >
                           <Sparkles aria-hidden="true" className="size-3" />
-                          AI Generated
+                          {t("aiGenerated")}
                           {model && <span className="sr-only"> ({model})</span>}
                         </Badge>
                         {questionSet.metadata?.ragEnabled === true && (
@@ -131,7 +129,7 @@ export function QuestionSetGridView({
                             className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                           >
                             <Layers aria-hidden="true" className="size-3" />
-                            RAG Enhanced
+                            {t("ragEnhanced")}
                           </Badge>
                         )}
                       </div>
@@ -141,7 +139,7 @@ export function QuestionSetGridView({
                         onClick={() => setSelectedId(questionSet._id)}
                       >
                         <ExternalLink aria-hidden="true" className="size-4" />
-                        View Details
+                        {t("viewDetails")}
                       </Button>
                       <Button
                         type="button"
@@ -149,14 +147,14 @@ export function QuestionSetGridView({
                         className="w-full border-destructive/20"
                         aria-label={
                           isDeleting
-                            ? `Deleting ${questionSet.title}`
-                            : `Delete ${questionSet.title}`
+                            ? t("deletingNamed", { title: questionSet.title })
+                            : t("deleteNamed", { title: questionSet.title })
                         }
                         disabled={isRefreshing || deletingId !== null}
                         onClick={() => onDelete(questionSet)}
                       >
                         <Trash2 aria-hidden="true" className="size-4" />
-                        {isDeleting ? "Deleting..." : "Delete"}
+                        {isDeleting ? t("deleting") : t("delete")}
                       </Button>
                     </div>
                   </li>

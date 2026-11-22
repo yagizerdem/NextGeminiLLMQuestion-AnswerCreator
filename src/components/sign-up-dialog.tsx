@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocalization, type TranslationKey } from "@/providers/localization-provider";
+import { getAuthErrorKey } from "@/lib/localize-auth-error";
 import { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { UserPlus } from "lucide-react";
@@ -23,6 +25,7 @@ interface SignUpOptions {
 }
 
 function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useLocalization();
   const contentRef = useRef<HTMLDivElement>(null);
   const [signUpOptions, setSignUpOptions] = useState<SignUpOptions>({
     username: "",
@@ -30,7 +33,7 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<TranslationKey[]>([]);
   const { publishEvent } = useEventEmitter<{ success: boolean }>(
     "signUpResult",
   );
@@ -69,20 +72,21 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
         body: JSON.stringify(signUpOptions),
       });
 
-      const json = await response.json();
-      console.log(json);
-
       if (!response.ok) {
-        toast.error(json.message || "Failed to sign up");
-        setErrors(json.errors || []);
+        const json: { message?: unknown; errors?: unknown } = await response.json();
+        toast.error(t(getAuthErrorKey(json.message, "signUpFailed")));
+        setErrors(Array.isArray(json.errors)
+          ? json.errors.map((error) => getAuthErrorKey(error, "signUpFailed"))
+          : []);
         return;
       }
 
       publishEvent({ success: true });
       onSuccess();
-      toast.success("Successfully signed up");
+      toast.success(t("signedUp"));
     } catch (error) {
       console.error(error);
+      toast.error(t("signUpFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -95,22 +99,22 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
       </div>
       <DialogHeader>
         <DialogTitle className="text-2xl font-semibold">
-          Create an account
+          {t("createAccount")}
         </DialogTitle>
         <DialogDescription>
-          Sign up to start creating questions from your documents.
+          {t("createAccountDescription")}
         </DialogDescription>
       </DialogHeader>
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <label htmlFor="signup-username" className="text-sm font-medium">
-            Username
+            {t("username")}
           </label>
           <Input
             id="signup-username"
             type="text"
             autoComplete="username"
-            placeholder="Choose a username"
+            placeholder={t("chooseUsername")}
             required
             className="h-11"
             onChange={(event) => {
@@ -123,13 +127,13 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
         <div className="space-y-2">
           <label htmlFor="signup-email" className="text-sm font-medium">
-            Email address
+            {t("emailAddress")}
           </label>
           <Input
             id="signup-email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t("emailExample")}
             required
             className="h-11"
             onChange={(event) => {
@@ -142,13 +146,13 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
         <div className="space-y-2">
           <label htmlFor="signup-password" className="text-sm font-medium">
-            Password
+            {t("password")}
           </label>
           <Input
             id="signup-password"
             type="password"
             autoComplete="new-password"
-            placeholder="Create a password"
+            placeholder={t("createPassword")}
             required
             className="h-11"
             onChange={(event) => {
@@ -160,14 +164,14 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
           />
         </div>
         <Button type="submit" className="h-11 w-full" disabled={isLoading}>
-          {isLoading ? "Signing up..." : "Sign up"}
+          {isLoading ? t("signingUp") : t("signUp")}
         </Button>
       </form>
       {errors.length > 0 && (
         <div className="mt-4 space-y-2">
           {errors.map((error, index) => (
             <p key={index} className="text-sm text-red-600">
-              {error}
+              {t(error)}
             </p>
           ))}
         </div>
@@ -177,19 +181,20 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function SignUpDialog() {
+  const { t } = useLocalization();
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        {t("noAccount")}{" "}
         <DialogTrigger asChild>
           <Button
             type="button"
             variant="link"
             className="h-auto p-0 text-violet-700 dark:text-violet-300"
           >
-            Sign up
+            {t("signUp")}
           </Button>
         </DialogTrigger>
       </p>

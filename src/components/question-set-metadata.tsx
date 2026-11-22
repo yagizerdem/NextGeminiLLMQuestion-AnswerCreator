@@ -1,3 +1,4 @@
+import { useLocalization } from "@/providers/localization-provider";
 import { CalendarDays, Hash, Info, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { IQuestionSet } from "@/models/questionset";
@@ -7,21 +8,21 @@ type QuestionSetMetadataProps = Pick<
   "totalCount" | "createdAt" | "metadata"
 >;
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeZone: "UTC",
-});
-
 export function QuestionSetMetadata({
   totalCount,
   createdAt,
   metadata,
 }: QuestionSetMetadataProps) {
+  const { language, t } = useLocalization();
+  const dateFormatter = new Intl.DateTimeFormat(language, {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  });
   const date = createdAt ? new Date(createdAt) : null;
   const details = [
-    { label: "Total Questions", value: totalCount, icon: Hash },
+    { label: t("totalQuestions"), value: totalCount, icon: Hash },
     {
-      label: "Created At",
+      label: t("createdAt"),
       value:
         date && !Number.isNaN(date.getTime()) ? (
           <time dateTime={date.toISOString()}>{dateFormatter.format(date)}</time>
@@ -29,7 +30,7 @@ export function QuestionSetMetadata({
       icon: CalendarDays,
     },
     {
-      label: "AI Model",
+      label: t("aiModel"),
       value: metadata?.aiModel?.trim() || null,
       icon: Info,
     },
@@ -37,7 +38,7 @@ export function QuestionSetMetadata({
 
   return (
     <dl
-      aria-label="Question set details"
+      aria-label={t("questionSetDetails")}
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg bg-muted/50 px-4 py-3 text-xs"
     >
       {details.map(({ label, value, icon: Icon }) => (
@@ -47,7 +48,7 @@ export function QuestionSetMetadata({
             {label}:
           </dt>
           <dd className="min-w-0 wrap-anywhere text-muted-foreground">
-            {value ?? "Not available"}
+            {value ?? t("notAvailable")}
           </dd>
         </div>
       ))}
@@ -55,7 +56,7 @@ export function QuestionSetMetadata({
         <div className="flex items-center gap-2">
           <dt className="flex items-center text-muted-foreground">
             <Tag aria-hidden="true" className="size-3.5" />
-            <span className="sr-only">Retrieval-augmented generation</span>
+            <span className="sr-only">{t("rag")}</span>
           </dt>
           <dd>
             <Badge
@@ -66,7 +67,7 @@ export function QuestionSetMetadata({
                   : undefined
               }
             >
-              {metadata.ragEnabled ? "RAG Enhanced" : "RAG Disabled"}
+              {metadata.ragEnabled ? t("ragEnhanced") : t("ragDisabled")}
             </Badge>
           </dd>
         </div>

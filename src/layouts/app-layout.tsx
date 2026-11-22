@@ -1,5 +1,6 @@
 "use client";
 
+import { isLanguage, useLocalization } from "@/providers/localization-provider";
 import { Brain, ChevronDown, Globe, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,11 +26,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const languages = [
-  { code: "EN", label: "English" },
-  { code: "TR", label: "T\u00fcrk\u00e7e" },
-];
+  { code: "en", label: "english" },
+  { code: "tr", label: "turkish" },
+] as const;
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { language, setLanguage, t } = useLocalization();
   const { user, setUser } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -41,10 +43,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         throw new Error(`Sign out failed with status ${response.status}`);
       }
       setUser(null);
-      toast.success("Successfully signed out");
+      toast.success(t("signedOut"));
     } catch (error) {
       console.error("Failed to sign out", error);
-      toast.error("Failed to sign out. Please try again.");
+      toast.error(t("signOutFailed"));
     } finally {
       setIsSigningOut(false);
     }
@@ -60,18 +62,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 aria-hidden="true"
                 className="size-6 text-violet-700 dark:text-violet-300"
               />
-              <span>Gemini Q&amp;A</span>
+              <span>{t("brandName")}</span>
             </Link>
             {user && (
               <div className="flex flex-wrap gap-2 text-xs font-medium">
                 <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-violet-700 dark:text-violet-300">
-                  Your workspace
+                  {t("workspace")}
                 </span>
                 <span className="rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-sky-700 dark:text-sky-300">
-                  AI powered
+                  {t("aiPowered")}
                 </span>
                 <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-300">
-                  Ready to create
+                  {t("readyToCreate")}
                 </span>
               </div>
             )}
@@ -84,7 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     type="button"
                     variant="outline"
                     className="h-9 gap-2 rounded-full pr-3 pl-1"
-                    aria-label={`Account menu for ${user.username}`}
+                    aria-label={t("accountMenu", { username: user.username })}
                     disabled={isSigningOut}
                   >
                     <Avatar size="sm" aria-hidden="true">
@@ -111,7 +113,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuItem asChild>
                     <Link href="/profile">
                       <UserRound aria-hidden="true" className="size-4" />
-                      Profile
+                      {t("profile")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -120,14 +122,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     onSelect={() => void signOut()}
                   >
                     <LogOut aria-hidden="true" className="size-4" />
-                    Sign out
+                    {t("signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Select defaultValue="EN">
+            <Select
+              value={language}
+              onValueChange={(value) => {
+                if (isLanguage(value)) setLanguage(value);
+              }}
+            >
               <SelectTrigger
-                aria-label="Language"
+                aria-label={t("language")}
                 className="gap-2 rounded-full border-violet-500/20 bg-background px-3 font-medium hover:border-violet-500/40 hover:bg-violet-500/5 data-[size=default]:h-9 dark:bg-background"
               >
                 <Globe
@@ -150,7 +157,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     value={code}
                     className="rounded-lg py-2 pl-2.5 data-[state=checked]:font-semibold focus:bg-violet-500/10 focus:text-violet-700 dark:focus:text-violet-300"
                   >
-                    {label}
+                    {t(label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -169,17 +176,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               aria-hidden="true"
               className="size-5 text-violet-700 dark:text-violet-300"
             />
-            <span>Gemini Q&amp;A</span>
+            <span>{t("brandName")}</span>
           </Link>
           <p className="text-sm text-muted-foreground">
-            Create thoughtful questions. Find clearer answers.
+            {t("createThoughtfulQuestions")}
           </p>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Gemini Q&amp;A
+            &copy; {new Date().getFullYear()} {t("brandName")}
           </p>
         </div>
       </footer>
-      <Toaster duration={5000} position="top-right" />
+      <Toaster
+        duration={5000}
+        position="top-right"
+        containerAriaLabel={t("notifications")}
+      />
     </div>
   );
 }

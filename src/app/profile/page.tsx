@@ -1,4 +1,6 @@
 "use client";
+import { useLocalization } from "@/providers/localization-provider";
+import { getAuthErrorKey } from "@/lib/localize-auth-error";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -35,6 +37,7 @@ const keyResponseSchema = z.object({
 });
 
 export default function ProfilePage() {
+  const { t } = useLocalization();
   const router = useRouter();
   const { user, setUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -45,7 +48,7 @@ export default function ProfilePage() {
   const keyStatusVersion = useRef(0);
   const [keyResult, setKeyResult] = useState<
     | { userId: string; maskedKey: string | null; error?: never }
-    | { userId: string; error: string; maskedKey?: never }
+    | { userId: string; error: true; maskedKey?: never }
     | null
   >(null);
   const hasChanges = Boolean(username.trim() || email.trim());
@@ -85,7 +88,7 @@ export default function ProfilePage() {
         console.error("Failed to load API key status", error);
         setKeyResult({
           userId: activeUserId,
-          error: "Could not load your API key status.",
+          error: true,
         });
       }
     }
@@ -113,11 +116,12 @@ export default function ProfilePage() {
       const data: unknown = await response.json();
       if (!response.ok) {
         const parsed = errorResponseSchema.safeParse(data);
-        toast.error(
-          (parsed.success &&
-            (parsed.data.errors?.join(" ") || parsed.data.message)) ||
-            "Failed to update information.",
-        );
+        const messages = parsed.success
+          ? parsed.data.errors?.length ? parsed.data.errors : [parsed.data.message]
+          : [undefined];
+        toast.error(messages.map((message) =>
+          t(getAuthErrorKey(message, "updateInformationFailed")),
+        ).join(" "));
         return;
       }
 
@@ -132,10 +136,10 @@ export default function ProfilePage() {
       );
       setUsername("");
       setEmail("");
-      toast.success("Information updated successfully.");
+      toast.success(t("informationUpdated"));
     } catch (error) {
       console.error("Failed to update information", error);
-      toast.error("Failed to update information. Please try again.");
+      toast.error(t("updateInformationRetry"));
     } finally {
       setIsUpdating(false);
     }
@@ -155,11 +159,12 @@ export default function ProfilePage() {
       const data: unknown = await response.json();
       if (!response.ok) {
         const parsed = errorResponseSchema.safeParse(data);
-        toast.error(
-          (parsed.success &&
-            (parsed.data.errors?.join(" ") || parsed.data.message)) ||
-            "Failed to update API key.",
-        );
+        const messages = parsed.success
+          ? parsed.data.errors?.length ? parsed.data.errors : [parsed.data.message]
+          : [undefined];
+        toast.error(messages.map((message) =>
+          t(getAuthErrorKey(message, "updateApiKeyFailed")),
+        ).join(" "));
         return;
       }
 
@@ -178,10 +183,10 @@ export default function ProfilePage() {
           : previous,
       );
       setGeminiToken("");
-      toast.success("API key updated successfully.");
+      toast.success(t("apiKeyUpdated"));
     } catch (error) {
       console.error("Failed to update API key", error);
-      toast.error("Failed to update API key. Please try again.");
+      toast.error(t("updateApiKeyRetry"));
     } finally {
       setIsUpdatingKey(false);
     }
@@ -200,7 +205,7 @@ export default function ProfilePage() {
             className="size-4 transition-transform group-hover:-translate-x-1"
             aria-hidden="true"
           />
-          Back
+          {t("back")}
         </Button>
       </div>
       <div className="relative mx-auto my-10 flex min-h-28 w-3/4 flex-col justify-center overflow-hidden rounded-2xl bg-linear-to-r from-purple-600 to-blue-500 px-6 py-4">
@@ -214,7 +219,7 @@ export default function ProfilePage() {
           <div className="absolute bottom-4 right-28 size-8 rounded-full bg-white/20 blur-sm" />
         </div>
         <h1 className="relative text-2xl font-bold text-white sm:text-3xl lg:pr-44 border-b">
-          Manage your api setttings and API configuratinon
+          {t("manageApiSettings")}
         </h1>
       </div>
 
@@ -225,9 +230,9 @@ export default function ProfilePage() {
               <UserRound aria-hidden="true" className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Personal information</h2>
+              <h2 className="text-lg font-semibold">{t("personalInformation")}</h2>
               <p className="text-sm text-muted-foreground">
-                Update your name or email.
+                {t("updateNameOrEmail")}
               </p>
             </div>
           </div>
@@ -238,13 +243,13 @@ export default function ProfilePage() {
           >
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
-                Name
+                {t("name")}
               </label>
               <Input
                 id="name"
                 name="username"
                 type="text"
-                placeholder="Enter your name"
+                placeholder={t("enterName")}
                 className="border-foreground/30"
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
@@ -253,13 +258,13 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
-                Email
+                {t("email")}
               </label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t("enterEmail")}
                 className="border-foreground/30"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -272,7 +277,7 @@ export default function ProfilePage() {
                 disabled={!user || isUpdating || !hasChanges}
                 className="bg-linear-to-r from-purple-600 to-blue-500 px-4 text-white hover:from-purple-700 hover:to-blue-600"
               >
-                {isUpdating ? "Updating..." : "Update Information"}
+                {isUpdating ? t("updating") : t("updateInformation")}
               </Button>
             </div>
           </form>
@@ -285,9 +290,9 @@ export default function ProfilePage() {
                 <KeyRound aria-hidden="true" className="size-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">API Key Management</h2>
+                <h2 className="text-lg font-semibold">{t("apiKeyManagement")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Manage your Gemini API configuration.
+                  {t("manageGeminiApi")}
                 </p>
               </div>
             </div>
@@ -298,21 +303,21 @@ export default function ProfilePage() {
             className="rounded-2xl border bg-card p-6 shadow-lg shadow-black/5"
           >
             <label htmlFor="gemini-key" className="text-sm font-semibold">
-              Gemini API key
+              {t("geminiApiKey")}
             </label>
             {currentKeyResult?.error ? (
               <p role="alert" className="mt-2 text-sm text-destructive">
-                {currentKeyResult.error}
+                {t("keyStatusFailed")}
               </p>
             ) : (
               <p className="mt-2 text-sm text-muted-foreground" role="status">
                 {!user
-                  ? "Sign in to view your API key status."
+                  ? t("signInForKeyStatus")
                   : !currentKeyResult
-                    ? "Loading API key status..."
+                    ? t("loadingKeyStatus")
                     : currentKeyResult.maskedKey
-                      ? `Saved key: ${currentKeyResult.maskedKey}`
-                      : "No API key saved."}
+                      ? t("savedKey", { key: currentKeyResult.maskedKey })
+                      : t("noSavedKey")}
               </p>
             )}
             <Input
@@ -321,7 +326,7 @@ export default function ProfilePage() {
               type="password"
               autoComplete="off"
               placeholder={
-                currentKeyResult?.maskedKey || "Enter a new Gemini API key"
+                currentKeyResult?.maskedKey || t("enterNewKey")
               }
               value={geminiToken}
               onChange={(event) => setGeminiToken(event.target.value)}
@@ -331,7 +336,7 @@ export default function ProfilePage() {
             />
             <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck aria-hidden="true" className="size-4 shrink-0" />
-              Your API key is displayed in masked form.
+              {t("keyMasked")}
             </p>
             <div className="mt-5 flex justify-end border-t pt-4">
               <Button
@@ -339,7 +344,7 @@ export default function ProfilePage() {
                 disabled={!user || isUpdatingKey || !geminiToken.trim()}
                 className="bg-linear-to-r from-purple-600 to-blue-500 px-4 text-white hover:from-purple-700 hover:to-blue-600"
               >
-                {isUpdatingKey ? "Updating..." : "Update API Key"}
+                {isUpdatingKey ? t("updating") : t("updateApiKey")}
               </Button>
             </div>
           </form>
@@ -350,11 +355,11 @@ export default function ProfilePage() {
                 aria-hidden="true"
                 className="size-5 text-purple-600 dark:text-purple-300"
               />
-              <h3 className="font-semibold">How to get an API key</h3>
+              <h3 className="font-semibold">{t("getApiKey")}</h3>
             </div>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
               <li>
-                Open{" "}
+                {t("openGoogleStudio")}{" "}
                 <a
                   href="https://aistudio.google.com/apikey"
                   target="_blank"
@@ -363,10 +368,10 @@ export default function ProfilePage() {
                 >
                   Google AI Studio
                 </a>{" "}
-                and sign in.
+                {t("signInToStudio")}
               </li>
-              <li>Create an API key and choose a Google Cloud project.</li>
-              <li>Copy the key and keep it private.</li>
+              <li>{t("createCloudKey")}</li>
+              <li>{t("keepKeyPrivate")}</li>
             </ol>
           </div>
         </div>
