@@ -29,6 +29,10 @@ both ports are bound to localhost. MongoDB data persists in the `mongo_data`
 Docker volume. Stop the services with `docker compose down`; do not add `-v`
 unless you intend to delete the stored data.
 
+Local file storage uses the `uploads` directory in the project root. The
+directory is created on first use and ignored by Git. Saving a file with an
+existing name overwrites it.
+
 First, run the development server:
 
 ```bash

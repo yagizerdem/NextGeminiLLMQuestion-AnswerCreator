@@ -4,18 +4,11 @@ import { HttpStatusCode } from "@/lib/utils";
 import User from "@/models/user";
 import { errors } from "jose";
 import { isObjectIdOrHexString } from "mongoose";
+import { unauthorized } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
-  const unauthorized = () =>
-    NextResponse.json(
-      { message: "Unauthorized" },
-      {
-        status: HttpStatusCode.UNAUTHORIZED,
-        headers: { "Cache-Control": "no-store" },
-      },
-    );
 
   if (!token) return unauthorized();
 
