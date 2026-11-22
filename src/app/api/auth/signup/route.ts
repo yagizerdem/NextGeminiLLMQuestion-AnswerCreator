@@ -13,7 +13,8 @@ const registerSchema = z.object({
     .min(6, "Password must be at least 6 characters long."),
   username: z
     .string({ error: "Username is required and must be a string." })
-    .min(3, "Username must be at least 3 characters long."),
+    .min(3, "Username must be at least 3 characters long.")
+    .max(20, "Username must be at most 20 characters long."),
 });
 
 export async function POST(request: Request) {

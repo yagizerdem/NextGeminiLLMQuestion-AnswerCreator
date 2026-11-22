@@ -19,7 +19,7 @@ import QuestionSetModel from "@/models/questionset";
 
 const schema = z.object({
   difficulty: z.enum(["easy", "medium", "hard", "expert"]),
-  questionCount: z.number().min(5).max(10),
+  questionCount: z.number().min(1).max(10),
   uploadId: z.string().refine(isObjectIdOrHexString, {
     message: "Upload ID must be a valid MongoDB ObjectId.",
   }),

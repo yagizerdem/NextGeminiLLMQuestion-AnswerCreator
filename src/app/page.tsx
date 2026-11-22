@@ -17,6 +17,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { SignUpDialog } from "@/components/sign-up-dialog";
 import { QuestionSetDisplay } from "@/components/question-set-display";
+import { QuestionSetGridView } from "@/components/question-set-grid-view";
 import { useAuth } from "@/providers/auth-provider";
 import {
   useState,
@@ -60,6 +71,9 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [questionSetToDelete, setQuestionSetToDelete] =
+    useState<IQuestionSet | null>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [difficulty, setDifficulty] = useState<
     "easy" | "medium" | "hard" | "export"
@@ -71,6 +85,7 @@ export default function Home() {
   const [questionSetDisplayId, setQuestionSetDisplayId] = useState<
     string | null
   >(null);
+  const [showQuestionSetGridView, setShowQuestionSetGridView] = useState(false);
 
   async function uploadDocument() {
     if (!user) {
@@ -137,7 +152,7 @@ export default function Home() {
 
       const data: { questionSet: IQuestionSet } = await response.json();
 
-      setQuestionSets((prev) => [...prev, data.questionSet]);
+      setQuestionSets((prev) => [data.questionSet, ...prev]);
     } catch (error) {
       console.error("Failed to generate questions", error);
       toast.error("Failed to generate questions. Please try again.");
@@ -172,6 +187,30 @@ export default function Home() {
     }
   }
 
+  async function deleteQuestionSet(questionSet: IQuestionSet) {
+    if (!user || isRefreshing || deletingId) return;
+    setDeletingId(questionSet._id);
+    try {
+      const response = await fetch(
+        `/api/question?id=${encodeURIComponent(questionSet._id)}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      setQuestionSets((previous) =>
+        previous.filter((item) => item._id !== questionSet._id),
+      );
+      setQuestionSetToDelete(null);
+      toast.success("Question set deleted.");
+    } catch (error) {
+      console.error("Failed to delete question set", error);
+      toast.error("Failed to delete question set. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const stats = useMemo<Stats>(() => {
     const totalSessions = questionSets.length;
     const totalQuestions = questionSets.reduce(
@@ -198,10 +237,52 @@ export default function Home() {
 
   return (
     <Fragment>
+      <AlertDialog
+        open={questionSetToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setQuestionSetToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete question set?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete &quot;{questionSetToDelete?.title}&quot;? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deletingId !== null}
+              onClick={(event) => {
+                event.preventDefault();
+                if (questionSetToDelete) {
+                  void deleteQuestionSet(questionSetToDelete);
+                }
+              }}
+            >
+              {deletingId ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {questionSetDisplayId && (
         <QuestionSetDisplay
           _id={questionSetDisplayId}
           onClose={() => setQuestionSetDisplayId(null)}
+        />
+      )}
+      {showQuestionSetGridView && (
+        <QuestionSetGridView
+          questionSets={questionSets}
+          onClose={() => setShowQuestionSetGridView(false)}
+          onDelete={setQuestionSetToDelete}
+          deletingId={deletingId}
+          isRefreshing={isRefreshing}
         />
       )}
       <div className="w-full flex-1 bg-background bg-linear-to-br from-violet-500/10 via-transparent to-emerald-500/10 px-4 py-10 sm:px-6 lg:py-14">
@@ -319,7 +400,7 @@ export default function Home() {
                     id="question-count"
                     name="questionCount"
                     type="number"
-                    min={5}
+                    min={1}
                     max={10}
                     step={1}
                     value={questionCount}
@@ -367,7 +448,7 @@ export default function Home() {
                   type="button"
                   variant="outline"
                   onClick={refreshQuestionSets}
-                  disabled={isRefreshing || isGenerating}
+                  disabled={isRefreshing || isGenerating || deletingId !== null}
                 >
                   <RefreshCw
                     aria-hidden="true"
@@ -377,7 +458,7 @@ export default function Home() {
                 </Button>
               </div>
               <ul className="flex flex-col gap-3">
-                {questionSets.map((questionSet) => (
+                {questionSets.slice(0, 10).map((questionSet) => (
                   <li
                     key={questionSet._id}
                     className="flex flex-wrap items-center gap-4 rounded-2xl border border-violet-500/15 bg-card p-4 shadow-sm sm:p-5"
@@ -404,9 +485,40 @@ export default function Home() {
                     >
                       View
                     </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      aria-label={`Delete ${questionSet.title}`}
+                      disabled={isRefreshing || deletingId !== null}
+                      onClick={() => setQuestionSetToDelete(questionSet)}
+                    >
+                      {deletingId === questionSet._id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </Button>
                   </li>
                 ))}
               </ul>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                {questionSets.length > 10 && (
+                  <p className="text-sm text-muted-foreground">
+                    Showing 10 of {questionSets.length} question sets
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowQuestionSetGridView(true)}
+                  className="cursor-pointer group mx-auto h-11 w-3/4 rounded-xl border-violet-500/25 bg-card font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
+                >
+                  View all
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="size-4 transition-transform group-hover:translate-x-1"
+                  />
+                </Button>
+              </div>
             </section>
           </div>
           <div className="flex flex-col gap-4">
