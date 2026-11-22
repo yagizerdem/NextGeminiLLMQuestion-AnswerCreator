@@ -3,10 +3,14 @@
 import {
   ArrowRight,
   CircleCheck,
+  Clock3,
+  Cpu,
   FileStack,
   FileUp,
+  Lightbulb,
   ListChecks,
   LockKeyhole,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -21,23 +25,10 @@ import {
 } from "@/components/ui/select";
 import { SignUpDialog } from "@/components/sign-up-dialog";
 import { useAuth } from "@/providers/auth-provider";
-import { useState, type FormEvent, useRef } from "react";
+import { useState, type FormEvent, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { Question } from "@/lib/rag";
-
-const errorResponseSchema = z.object({ message: z.string().optional() });
-const difficultySchema = z.enum(["easy", "medium", "hard"]);
-const uploadResponseSchema = z.object({
-  document: z.object({
-    id: z.string(),
-    filename: z.string(),
-    originalName: z.string(),
-    mimeType: z.string(),
-    size: z.number(),
-    status: z.string(),
-  }),
-});
+import { IQuestionSet } from "@/models/questionset";
 
 interface Document {
   id: string;
@@ -48,15 +39,25 @@ interface Document {
   status: string;
 }
 
+interface Stats {
+  totalQuestions: number;
+  totalProcessedDocs: number;
+  totalQuestionSets: number;
+  totalSessions: number;
+  avgQuestionsPerSession: number;
+}
+
 export default function Home() {
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [document, setDocument] = useState<Document | null>(null);
-  const [difficulty, setDifficulty] =
-    useState<z.infer<typeof difficultySchema>>("medium");
+  const [difficulty, setDifficulty] = useState<
+    "easy" | "medium" | "hard" | "export"
+  >("medium");
   const [questionCount, setQuestionCount] = useState<number | "">(5);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionSets, setQuestionSets] = useState<IQuestionSet[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -86,18 +87,11 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        let message = "Failed to upload document.";
-        if (
-          response.headers.get("content-type")?.includes("application/json")
-        ) {
-          const error = errorResponseSchema.safeParse(await response.json());
-          if (error.success && error.data.message) message = error.data.message;
-        }
-        toast.error(message);
+        toast.error("Failed to upload document.");
         return;
       }
 
-      const data = uploadResponseSchema.parse(await response.json());
+      const data: { document: Document } = await response.json();
       setDocument(data.document);
       toast.success("Document uploaded successfully");
     } catch (error) {
@@ -124,28 +118,68 @@ export default function Home() {
           questionCount,
         }),
       });
-      console.log(response);
 
       if (!response.ok) {
-        let message = "Failed to generate questions.";
-        if (
-          response.headers.get("content-type")?.includes("application/json")
-        ) {
-          const error = errorResponseSchema.safeParse(await response.json());
-          if (error.success && error.data.message) message = error.data.message;
-        }
-        toast.error(message);
+        toast.error("Failed to generate questions.");
         return;
       }
 
-      const data: { success: true; questions: Question[] } =
-        await response.json();
+      const data: { questionSet: IQuestionSet } = await response.json();
 
-      setQuestions(data.questions);
+      setQuestionSets((prev) => [...prev, data.questionSet]);
+    } catch (error) {
+      console.error("Failed to generate questions", error);
+      toast.error("Failed to generate questions. Please try again.");
     } finally {
       setIsGenerating(false);
     }
   }
+
+  useEffect(() => {
+    if (!user) {
+      setQuestionSets([]);
+    } else {
+      refreshQuestionSets();
+    }
+  }, [user]);
+
+  async function refreshQuestionSets() {
+    if (!user) return;
+    setIsRefreshing(true);
+    try {
+      const response = await fetch("/api/question");
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      const data: { questionSets: IQuestionSet[] } = await response.json();
+      setQuestionSets(data.questionSets);
+    } catch (error) {
+      console.error("Failed to refresh question sets", error);
+      toast.error("Failed to refresh question sets. Please try again.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
+  const stats = useMemo<Stats>(() => {
+    const totalSessions = questionSets.length;
+    const totalQuestions = questionSets.reduce(
+      (total, questionSet) => total + questionSet.totalCount,
+      0,
+    );
+    const totalProcessedDocs = new Set(
+      questionSets.map((questionSet) => questionSet.documentId.toString()),
+    ).size;
+
+    return {
+      totalQuestions,
+      totalProcessedDocs,
+      totalQuestionSets: totalSessions,
+      totalSessions,
+      avgQuestionsPerSession:
+        totalSessions === 0 ? 0 : totalQuestions / totalSessions,
+    };
+  }, [questionSets]);
 
   if (!user) {
     return <HomePage />;
@@ -186,6 +220,7 @@ export default function Home() {
                   const selectedFile = event.currentTarget.files?.[0] ?? null;
                   if (!selectedFile) return;
                   setFile(selectedFile);
+                  setDocument(null); // clear old document reference
                 }}
                 disabled={isUploading || isGenerating}
                 aria-describedby="document-file-help"
@@ -239,9 +274,7 @@ export default function Home() {
                 <Select
                   name="difficulty"
                   value={difficulty}
-                  onValueChange={(value) =>
-                    setDifficulty(difficultySchema.parse(value))
-                  }
+                  onValueChange={(value) => setDifficulty(value as any)}
                 >
                   <SelectTrigger id="question-level" className="w-full">
                     <SelectValue placeholder="Select level" />
@@ -290,17 +323,202 @@ export default function Home() {
                 type="button"
                 className="ml-auto h-11 bg-linear-to-r from-violet-600 to-sky-600 px-6 text-white"
                 onClick={generateQuestions}
-                disabled={isGenerating || isUploading || document == null}
+                disabled={
+                  isGenerating ||
+                  isUploading ||
+                  isRefreshing ||
+                  document == null
+                }
               >
                 Generate Questions
               </Button>
             )}
           </section>
+          <section aria-labelledby="question-sets-title">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="question-sets-title" className="text-lg font-semibold">
+                Question sets
+              </h2>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={refreshQuestionSets}
+                disabled={isRefreshing || isGenerating}
+              >
+                <RefreshCw
+                  aria-hidden="true"
+                  className={isRefreshing ? "animate-spin" : ""}
+                />
+                {isRefreshing ? "Refreshing..." : "Refresh"}
+              </Button>
+            </div>
+            <ul className="flex flex-col gap-3">
+              {questionSets.map((questionSet) => (
+                <li
+                  key={questionSet._id}
+                  className="flex items-center gap-4 rounded-2xl border border-violet-500/15 bg-card p-4 shadow-sm sm:p-5"
+                >
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-violet-500/15 to-sky-500/15 text-violet-600 dark:text-violet-300">
+                    <ListChecks aria-hidden="true" className="size-6" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="break-words text-base font-semibold">
+                      {questionSet.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Question set
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
+                    {questionSet.totalCount} questions
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
-        <div aria-hidden="true" className="grid grid-rows-3 gap-4">
-          <div className="min-h-36 rounded-3xl border border-violet-500/20 bg-card shadow-sm" />
-          <div className="min-h-36 rounded-3xl border border-sky-500/20 bg-card shadow-sm" />
-          <div className="min-h-36 rounded-3xl border border-emerald-500/20 bg-card shadow-sm" />
+        <div className="flex flex-col gap-4">
+          <section
+            aria-labelledby="generation-details-title"
+            className="min-h-36 rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-violet-500/10 sm:p-8"
+          >
+            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
+              <Sparkles aria-hidden="true" className="size-5" />
+            </div>
+            <h2 id="generation-details-title" className="text-lg font-semibold">
+              Generation details
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              A quick overview of your question workspace.
+            </p>
+            <dl className="mt-5 space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <Cpu
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
+                  />
+                  AI engine
+                </dt>
+                <dd className="text-right font-medium text-violet-700 dark:text-violet-300">
+                  Gemini 3.5 Flash Lite
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <Clock3
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
+                  />
+                  Processing speed
+                </dt>
+                <dd className="text-right font-medium">Varies by document</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <FileStack
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
+                  />
+                  Export formats
+                </dt>
+                <dd className="rounded-full bg-sky-500/10 px-2.5 py-1 text-right text-xs font-medium text-sky-700 dark:text-sky-300">
+                  In development
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <FileUp
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
+                  />
+                  Input formats
+                </dt>
+                <dd className="text-right font-medium">
+                  PDF, DOCX, Markdown, TXT
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <section
+            aria-labelledby="workspace-stats-title"
+            className="h-fit rounded-3xl border border-sky-500/20 bg-card bg-linear-to-br from-sky-500/10 via-transparent to-emerald-500/10 p-3 text-card-foreground shadow-xl shadow-sky-500/10"
+          >
+            <h2 id="workspace-stats-title" className="text-lg font-semibold">
+              Quick Stats
+            </h2>
+            <dl className="mt-3 space-y-1">
+              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                <dt className="text-xs text-muted-foreground">
+                  Total questions
+                </dt>
+                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                  {stats.totalQuestions}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                <dt className="text-xs text-muted-foreground">
+                  Processed documents
+                </dt>
+                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                  {stats.totalProcessedDocs}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                <dt className="text-xs text-muted-foreground">Question sets</dt>
+                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                  {stats.totalQuestionSets}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                <dt className="text-xs text-muted-foreground">Sessions</dt>
+                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                  {stats.totalSessions}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                <dt className="text-xs text-muted-foreground">
+                  Average questions per session
+                </dt>
+                <dd className="shrink-0 text-right text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
+                  {stats.avgQuestionsPerSession.toFixed(1)}
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <section
+            aria-labelledby="pro-tips-title"
+            className="min-h-fit rounded-3xl border border-emerald-500/20 bg-card bg-linear-to-br from-emerald-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-emerald-500/10 sm:p-8"
+          >
+            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500/20 to-sky-500/20 text-emerald-700 dark:text-emerald-300">
+              <Lightbulb aria-hidden="true" className="size-5" />
+            </div>
+            <h2 id="pro-tips-title" className="text-lg font-semibold">
+              Pro tips
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Get more out of your question sets.
+            </p>
+            <ul className="mt-5 space-y-3">
+              {[
+                "Use clear, well-structured documents to give the AI useful context.",
+                "Choose a difficulty level that matches your learning goals.",
+                "Keep uploads under 10 MiB and use PDF, DOCX, Markdown, or TXT.",
+                "Review generated questions and answers against your source material.",
+              ].map((tip) => (
+                <li
+                  key={tip}
+                  className="flex gap-3 rounded-xl border border-emerald-500/10 bg-background/60 p-3 text-sm text-muted-foreground"
+                >
+                  <CircleCheck
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300"
+                  />
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </div>
     </div>
@@ -382,12 +600,7 @@ function HomePage() {
         user: { id: string; email: string; username: string };
       } = await response.json();
       if (!response.ok) {
-        const error = errorResponseSchema.safeParse(data);
-        toast.error(
-          error.success
-            ? error.data.message || "Failed to sign in"
-            : "Failed to sign in",
-        );
+        toast.error("Failed to sign in");
         return;
       }
 

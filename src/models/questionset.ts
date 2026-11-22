@@ -2,6 +2,7 @@ import { model, models, Schema, Types, type Model } from "mongoose";
 import type { Question } from "@/lib/rag";
 
 export interface IQuestionSet {
+  _id: string;
   questions: Question[];
   totalCount: number;
   title: string;

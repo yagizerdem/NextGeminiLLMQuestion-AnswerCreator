@@ -159,16 +159,6 @@ export async function POST(request: NextRequest) {
     "English",
   );
 
-  await QuestionSetModel.insertMany([
-    {
-      questions,
-      totalCount: questions.length,
-      title: documentFromDb.originalName,
-      documentId: documentFromDb._id,
-      userId: userId,
-    },
-  ]);
-
   if (questions.length === 0) {
     return Response.json(
       { message: "Failed to generate valid questions. Please try again." },
@@ -176,7 +166,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return new Response(JSON.stringify({ success: true, questions }), {
+  const questionSet = await QuestionSetModel.create({
+    questions,
+    totalCount: questions.length,
+    title: documentFromDb.originalName,
+    documentId: documentFromDb._id,
+    userId,
+  });
+
+  return new Response(JSON.stringify({ success: true, questionSet }), {
     status: HttpStatusCode.OK,
   });
 }
