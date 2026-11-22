@@ -85,7 +85,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 gap-2 rounded-full pr-3 pl-1"
+                    className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default h-9 gap-2 rounded-full pr-3 pl-1"
                     aria-label={t("accountMenu", { username: user.username })}
                     disabled={isSigningOut}
                   >

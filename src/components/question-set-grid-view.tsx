@@ -53,7 +53,7 @@ export function QuestionSetGridView({
           <Button
             type="button"
             variant="ghost"
-            className="-ml-2 w-fit"
+            className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default -ml-2 w-fit"
             onClick={onClose}
           >
             <ArrowLeft aria-hidden="true" className="size-4" />
@@ -135,7 +135,7 @@ export function QuestionSetGridView({
                       </div>
                       <Button
                         type="button"
-                        className="w-full bg-linear-to-r from-violet-700 to-blue-700 font-semibold text-white hover:from-violet-800 hover:to-blue-800"
+                        className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default w-full bg-linear-to-r from-violet-700 to-blue-700 font-semibold text-white hover:from-violet-800 hover:to-blue-800"
                         onClick={() => setSelectedId(questionSet._id)}
                       >
                         <ExternalLink aria-hidden="true" className="size-4" />
@@ -144,7 +144,7 @@ export function QuestionSetGridView({
                       <Button
                         type="button"
                         variant="destructive"
-                        className="w-full border-destructive/20"
+                        className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default w-full border-destructive/20"
                         aria-label={
                           isDeleting
                             ? t("deletingNamed", { title: questionSet.title })

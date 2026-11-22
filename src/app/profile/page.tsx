@@ -198,7 +198,7 @@ export default function ProfilePage() {
         <Button
           type="button"
           variant="outline"
-          className="group cursor-pointer rounded-xl border-purple-500/20 bg-card px-4 font-medium shadow-sm hover:border-purple-500/40 hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-300"
+          className="disabled:cursor-default aria-disabled:cursor-default group cursor-pointer rounded-xl border-purple-500/20 bg-card px-4 font-medium shadow-sm hover:border-purple-500/40 hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-300"
           onClick={() => router.push("/")}
         >
           <ArrowLeftIcon
@@ -275,7 +275,7 @@ export default function ProfilePage() {
               <Button
                 type="submit"
                 disabled={!user || isUpdating || !hasChanges}
-                className="bg-linear-to-r from-purple-600 to-blue-500 px-4 text-white hover:from-purple-700 hover:to-blue-600"
+                className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default bg-linear-to-r from-purple-600 to-blue-500 px-4 text-white hover:from-purple-700 hover:to-blue-600"
               >
                 {isUpdating ? t("updating") : t("updateInformation")}
               </Button>
@@ -342,7 +342,7 @@ export default function ProfilePage() {
               <Button
                 type="submit"
                 disabled={!user || isUpdatingKey || !geminiToken.trim()}
-                className="bg-linear-to-r from-purple-600 to-blue-500 px-4 text-white hover:from-purple-700 hover:to-blue-600"
+                className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default bg-linear-to-r from-purple-600 to-blue-500 px-4 text-white hover:from-purple-700 hover:to-blue-600"
               >
                 {isUpdatingKey ? t("updating") : t("updateApiKey")}
               </Button>

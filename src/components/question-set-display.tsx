@@ -393,7 +393,7 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
             <Button
               type="button"
               variant="ghost"
-              className="-ml-2 w-fit"
+              className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default -ml-2 w-fit"
               onClick={onClose}
             >
               <ArrowLeft aria-hidden="true" className="size-4" />
@@ -401,6 +401,7 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
             </Button>
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <Button
+                className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
                 type="button"
                 variant="outline"
                 onMouseUp={() => {
@@ -412,7 +413,7 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="outline">
+                  <Button className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default" type="button" variant="outline">
                     <MoreHorizontal aria-hidden="true" className="size-4" />
                     {t("moreOptions")}
                   </Button>
@@ -715,6 +716,7 @@ function ExamFormatModal({
           </div>
           <DialogFooter>
             <Button
+              className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
               type="button"
               variant="outline"
               onClick={onClose}
@@ -722,7 +724,7 @@ function ExamFormatModal({
             >
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={isExporting}>
+            <Button className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default" type="submit" disabled={isExporting}>
               {isExporting ? t("generating") : t("generateExamPdf")}
             </Button>
           </DialogFooter>

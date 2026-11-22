@@ -49,7 +49,7 @@ function PaginationLink({
       asChild
       variant={isActive ? "outline" : "ghost"}
       size={size}
-      className={cn(className)}
+      className={cn("cursor-pointer disabled:cursor-default aria-disabled:cursor-default", className)}
     >
       <a
         aria-current={isActive ? "page" : undefined}

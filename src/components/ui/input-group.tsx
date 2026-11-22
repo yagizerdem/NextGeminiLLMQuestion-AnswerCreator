@@ -96,7 +96,7 @@ function InputGroupButton({
       type={type}
       data-size={size}
       variant={variant}
-      className={cn(inputGroupButtonVariants({ size }), className)}
+      className={cn("cursor-pointer disabled:cursor-default aria-disabled:cursor-default", inputGroupButtonVariants({ size }), className)}
       {...props}
     />
   )

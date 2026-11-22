@@ -18,7 +18,10 @@ export type Translate = (
   values?: Record<string, string | number>,
 ) => string;
 
-const dictionaries: Record<Language, Record<TranslationKey, string>> = { en, tr };
+const dictionaries: Record<Language, Record<TranslationKey, string>> = {
+  en,
+  tr,
+};
 const storageKey = "gemini-qa-language";
 const listeners = new Set<() => void>();
 let sessionLanguage: Language | undefined;
@@ -92,4 +95,13 @@ export function useLocalization() {
     throw new Error("useLocalization must be used within LocalizationProvider");
   }
   return context;
+}
+
+export function fullLanguageName(language: Language): string {
+  switch (language) {
+    case "en":
+      return "english";
+    case "tr":
+      return "turkish";
+  }
 }

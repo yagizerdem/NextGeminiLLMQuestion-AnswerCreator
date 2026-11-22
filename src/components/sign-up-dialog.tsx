@@ -163,7 +163,7 @@ function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
             }}
           />
         </div>
-        <Button type="submit" className="h-11 w-full" disabled={isLoading}>
+        <Button type="submit" className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default h-11 w-full" disabled={isLoading}>
           {isLoading ? t("signingUp") : t("signUp")}
         </Button>
       </form>
@@ -192,7 +192,7 @@ export function SignUpDialog() {
           <Button
             type="button"
             variant="link"
-            className="h-auto p-0 text-violet-700 dark:text-violet-300"
+            className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default h-auto p-0 text-violet-700 dark:text-violet-300"
           >
             {t("signUp")}
           </Button>

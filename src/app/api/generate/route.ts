@@ -23,6 +23,10 @@ const schema = z.object({
   uploadId: z.string().refine(isObjectIdOrHexString, {
     message: "Upload ID must be a valid MongoDB ObjectId.",
   }),
+  language: z
+    .string()
+    .toLowerCase()
+    .pipe(z.enum(["english", "turkish"])),
 });
 
 export async function POST(request: NextRequest) {
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { difficulty, questionCount, uploadId } = parsedBody.data;
+  const { difficulty, questionCount, uploadId, language } = parsedBody.data;
   await connectToDatabase();
   const documentFromDb: IDocument | null =
     await Document.findById(uploadId).select("+content");
@@ -163,7 +167,7 @@ export async function POST(request: NextRequest) {
     topKChunks,
     questionCount,
     difficulty,
-    "English",
+    language,
   );
 
   if (questions.length === 0) {

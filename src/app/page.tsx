@@ -1,6 +1,9 @@
 "use client";
 
-import { useLocalization } from "@/providers/localization-provider";
+import {
+  fullLanguageName,
+  useLocalization,
+} from "@/providers/localization-provider";
 import { getAuthErrorKey } from "@/lib/localize-auth-error";
 import {
   ArrowRight,
@@ -143,6 +146,7 @@ export default function Home() {
           uploadId: document?.id,
           difficulty,
           questionCount,
+          language: fullLanguageName(language),
         }),
       });
 
@@ -256,11 +260,14 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>{t("deleteQuestionSet")}</DialogTitle>
             <DialogDescription>
-              {t("confirmDeleteQuestionSet", { title: questionSetToDelete?.title ?? "" })}
+              {t("confirmDeleteQuestionSet", {
+                title: questionSetToDelete?.title ?? "",
+              })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
+              className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
               type="button"
               variant="outline"
               disabled={deletingId !== null}
@@ -269,6 +276,7 @@ export default function Home() {
               {t("cancel")}
             </Button>
             <Button
+              className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
               type="button"
               variant="destructive"
               disabled={deletingId !== null}
@@ -433,7 +441,7 @@ export default function Home() {
             <section className="flex items-center">
               {file && !document && (
                 <Button
-                  className="mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
+                  className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
                   onMouseUp={uploadDocument}
                 >
                   {t("uploadDocument")}
@@ -443,7 +451,7 @@ export default function Home() {
               {document && (
                 <Button
                   type="button"
-                  className="ml-auto h-11 bg-linear-to-r from-violet-600 to-sky-600 px-6 text-white"
+                  className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default ml-auto h-11 bg-linear-to-r from-violet-600 to-sky-600 px-6 text-white"
                   onClick={generateQuestions}
                   disabled={
                     isGenerating ||
@@ -462,6 +470,7 @@ export default function Home() {
                   {t("questionSets")}
                 </h2>
                 <Button
+                  className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
                   type="button"
                   variant="outline"
                   onClick={refreshQuestionSets}
@@ -492,9 +501,15 @@ export default function Home() {
                       </p>
                     </div>
                     <span className="shrink-0 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                      {t(questionSet.totalCount === 1 ? "questionCountOne" : "questionCountMany", { count: questionSet.totalCount })}
+                      {t(
+                        questionSet.totalCount === 1
+                          ? "questionCountOne"
+                          : "questionCountMany",
+                        { count: questionSet.totalCount },
+                      )}
                     </span>
                     <Button
+                      className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
                       type="button"
                       variant="outline"
                       size="sm"
@@ -503,10 +518,13 @@ export default function Home() {
                       {t("view")}
                     </Button>
                     <Button
+                      className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
                       type="button"
                       variant="destructive"
                       size="sm"
-                      aria-label={t("deleteNamed", { title: questionSet.title })}
+                      aria-label={t("deleteNamed", {
+                        title: questionSet.title,
+                      })}
                       disabled={isRefreshing || deletingId !== null}
                       onClick={() => setQuestionSetToDelete(questionSet)}
                     >
@@ -520,14 +538,17 @@ export default function Home() {
               <div className="mt-4 flex items-center justify-between gap-3">
                 {questionSets.length > 10 && (
                   <p className="text-sm text-muted-foreground">
-                    {t("showingQuestionSets", { visible: 10, total: questionSets.length })}
+                    {t("showingQuestionSets", {
+                      visible: 10,
+                      total: questionSets.length,
+                    })}
                   </p>
                 )}
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowQuestionSetGridView(true)}
-                  className="cursor-pointer group mx-auto h-11 w-3/4 rounded-xl border-violet-500/25 bg-card font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
+                  className="disabled:cursor-default aria-disabled:cursor-default cursor-pointer group mx-auto h-11 w-3/4 rounded-xl border-violet-500/25 bg-card font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
                 >
                   {t("viewAll")}
                   <ArrowRight
@@ -576,7 +597,9 @@ export default function Home() {
                     />
                     {t("processingSpeed")}
                   </dt>
-                  <dd className="text-right font-medium">{t("variesByDocument")}</dd>
+                  <dd className="text-right font-medium">
+                    {t("variesByDocument")}
+                  </dd>
                 </div>
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
                   <dt className="flex items-center gap-2 text-muted-foreground">
@@ -637,7 +660,9 @@ export default function Home() {
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                  <dt className="text-xs text-muted-foreground">{t("sessions")}</dt>
+                  <dt className="text-xs text-muted-foreground">
+                    {t("sessions")}
+                  </dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
                     {stats.totalSessions}
                   </dd>
@@ -647,7 +672,10 @@ export default function Home() {
                     {t("averageQuestions")}
                   </dt>
                   <dd className="shrink-0 text-right text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
-                    {stats.avgQuestionsPerSession.toLocaleString(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                    {stats.avgQuestionsPerSession.toLocaleString(language, {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}
                   </dd>
                 </div>
               </dl>
@@ -723,8 +751,7 @@ const features = [
 const steps = [
   {
     title: "uploadYourDocuments",
-    description:
-      "supportedLearningMaterials",
+    description: "supportedLearningMaterials",
   },
   {
     title: "generateYourQuestions",
@@ -883,7 +910,11 @@ function HomePage() {
                   className="h-11"
                 />
               </div>
-              <Button type="submit" className="h-11 w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default h-11 w-full"
+                disabled={loading}
+              >
                 {loading ? t("signingIn") : t("signIn")}{" "}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
@@ -1006,9 +1037,7 @@ function WelcomeJumbutron() {
         <span aria-hidden="true">&#128075;</span>
       </h2>
       <p className="mt-2 text-sm text-white/90">
-        {user
-          ? t("welcomeMember")
-          : t("welcomeGuest")}
+        {user ? t("welcomeMember") : t("welcomeGuest")}
       </p>
     </section>
   );

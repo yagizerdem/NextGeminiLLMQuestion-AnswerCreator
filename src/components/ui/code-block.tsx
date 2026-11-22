@@ -111,7 +111,7 @@ function CodeBlockCopyButton({
         variant={variant}
         size={size}
         aria-label={copied ? "Copied" : "Copy"}
-        className={cn(className)}
+        className={cn("cursor-pointer disabled:cursor-default aria-disabled:cursor-default", className)}
         onClick={(event) => {
           onClick?.(event)
           navigator.clipboard

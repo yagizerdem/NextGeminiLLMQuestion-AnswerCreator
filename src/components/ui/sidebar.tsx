@@ -263,7 +263,7 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon-sm"
-      className={cn(className)}
+      className={cn("cursor-pointer disabled:cursor-default aria-disabled:cursor-default", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
