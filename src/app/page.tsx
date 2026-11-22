@@ -70,7 +70,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [questionSetDisplayId, setQuestionSetDisplayId] = useState<
     string | null
-  >("6b035528235df623bb8cc1fd");
+  >(null);
 
   async function uploadDocument() {
     if (!user) {
@@ -458,7 +458,7 @@ export default function Home() {
                     Export formats
                   </dt>
                   <dd className="rounded-full bg-sky-500/10 px-2.5 py-1 text-right text-xs font-medium text-sky-700 dark:text-sky-300">
-                    In development
+                    JSON, CSV, PDF
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
@@ -607,13 +607,12 @@ const steps = [
   },
 ];
 
-const exampleExportFormats = [
+const exportFormats = [
   {
     name: "PDF",
     description: "A shareable document for reading and printing.",
   },
-  { name: "DOCX", description: "An editable document for your workflow." },
-  { name: "Markdown", description: "A lightweight format for your notes." },
+  { name: "CSV", description: "A spreadsheet of questions and answers." },
   { name: "JSON", description: "Structured data for other applications." },
 ];
 
@@ -832,10 +831,10 @@ function HomePage() {
           Multiple export formats
         </h2>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          Example formats being considered for your question sets.
+          Download your question sets in your preferred format.
         </p>
         <ul className="mt-7 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-          {exampleExportFormats.map((format) => (
+          {exportFormats.map((format) => (
             <li
               key={format.name}
               className="flex-1 basis-48 rounded-2xl border border-emerald-500/15 bg-card bg-linear-to-br from-emerald-500/10 to-transparent p-6 text-card-foreground shadow-sm shadow-emerald-500/10"
@@ -851,9 +850,6 @@ function HomePage() {
             </li>
           ))}
         </ul>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Export is in development; supported formats are not yet finalized.
-        </p>
       </section>
     </div>
   );
