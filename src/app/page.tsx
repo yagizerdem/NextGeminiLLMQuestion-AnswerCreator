@@ -123,11 +123,19 @@ export default function Home() {
       console.log(response);
 
       if (!response.ok) {
-        toast.error("Failed to generate questions.");
+        let message = "Failed to generate questions.";
+        if (
+          response.headers.get("content-type")?.includes("application/json")
+        ) {
+          const error = errorResponseSchema.safeParse(await response.json());
+          if (error.success && error.data.message) message = error.data.message;
+        }
+        toast.error(message);
         return;
       }
 
       const data = await response.json();
+      console.log(data);
     } finally {
       setIsGenerating(false);
     }

@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
 
   const { difficulty, questionCount, uploadId } = parsedBody.data;
   await connectToDatabase();
-  const documentFromDb: IDocument | null = await Document.findById(uploadId);
+  const documentFromDb: IDocument | null =
+    await Document.findById(uploadId).select("+content");
   if (!documentFromDb) {
     return Response.json(
       { message: "Document not found" },
@@ -102,7 +103,25 @@ export async function POST(request: NextRequest) {
     : Buffer.from(documentFromDb.content);
 
   const documentParser = new DocParser();
-  const parsed: ParsedDocument = documentParser.parseTxt(docContent);
+  let parsed: ParsedDocument;
+  try {
+    parsed = await documentParser.parse(
+      docContent,
+      documentFromDb.originalName,
+    );
+  } catch (error) {
+    if (
+      error instanceof TypeError &&
+      "code" in error &&
+      error.code === "ERR_ENCODING_INVALID_ENCODED_DATA"
+    ) {
+      return Response.json(
+        { message: "TXT and Markdown files must be valid UTF-8 text." },
+        { status: HttpStatusCode.BAD_REQUEST },
+      );
+    }
+    throw error;
+  }
   const cleanedText = documentParser.cleanText(parsed.text);
 
   const ragService = new RagService(effectiveKey);
@@ -127,6 +146,7 @@ export async function POST(request: NextRequest) {
 
   for (const query of queries) {
     const chunks = await simpleVectorStore.similaritySearch(query, 5);
+    if (topKChunks.some((c) => c.id === chunks[0]?.id)) continue;
     topKChunks.push(...chunks);
   }
 
@@ -138,7 +158,12 @@ export async function POST(request: NextRequest) {
     "English",
   );
 
-  console.log(questions);
+  if (questions.length === 0) {
+    return Response.json(
+      { message: "Failed to generate valid questions. Please try again." },
+      { status: HttpStatusCode.BAD_GATEWAY },
+    );
+  }
 
   return new Response(JSON.stringify({ success: true, questions }), {
     status: HttpStatusCode.OK,

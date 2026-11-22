@@ -1,6 +1,7 @@
 import { DOMParser, onErrorStopParsing } from "@xmldom/xmldom";
 import JSZip from "jszip";
 import * as mammoth from "mammoth";
+import path from "path";
 import { extractText, getDocumentProxy, getMeta } from "unpdf";
 
 export interface ParsedDocument {
@@ -11,6 +12,22 @@ export interface ParsedDocument {
 }
 
 export class DocParser {
+  async parse(buffer: Buffer, filename: string): Promise<ParsedDocument> {
+    switch (path.extname(filename).toLowerCase()) {
+      case ".pdf":
+        return this.parsePdf(buffer);
+      case ".docx":
+        return this.parseDocx(buffer);
+      case ".txt":
+        return this.parseTxt(buffer);
+      case ".md":
+      case ".markdown":
+        return this.parseMarkdown(buffer);
+      default:
+        throw new Error("Unsupported document extension.");
+    }
+  }
+
   async parsePdf(buffer: Buffer): Promise<ParsedDocument> {
     const pdf = await getDocumentProxy(new Uint8Array(buffer));
     try {
