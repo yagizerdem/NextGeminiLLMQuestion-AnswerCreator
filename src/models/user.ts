@@ -1,4 +1,4 @@
-import { InferSchemaType, Model, model, models, Schema } from "mongoose";
+import { Model, model, models, Schema } from "mongoose";
 
 export interface User {
   username: string;

@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Toaster } from "@/components/ui/sonner";
 
 const languages = ["TR", "EN"];
 
@@ -16,7 +17,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="border-b border-border bg-background bg-linear-to-r from-violet-500/10 via-transparent to-sky-500/10 text-foreground">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Brain aria-hidden="true" className="size-6 text-violet-700 dark:text-violet-300" />
+            <Brain
+              aria-hidden="true"
+              className="size-6 text-violet-700 dark:text-violet-300"
+            />
             <span>Gemini Q&amp;A</span>
           </Link>
           <Select defaultValue="EN">
@@ -54,6 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </p>
         </div>
       </footer>
+      <Toaster duration={5000} position="top-right" />
     </div>
   );
 }

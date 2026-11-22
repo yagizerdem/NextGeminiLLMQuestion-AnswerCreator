@@ -74,7 +74,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   function signin() {
-    // Implement your sign-in logic here
+    try {
+      setLoading(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -177,7 +181,11 @@ export default function Home() {
                   className="h-11"
                 />
               </div>
-              <Button type="submit" className="h-11 w-full" onMouseUp={signin} disabled={loading}
+              <Button
+                type="submit"
+                className="h-11 w-full"
+                onMouseUp={signin}
+                disabled={loading}
               >
                 Sign in <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
