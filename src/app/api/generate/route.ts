@@ -15,6 +15,7 @@ import {
   RagService,
   SimpleVectorStore,
 } from "@/lib/rag";
+import QuestionSetModel from "@/models/questionset";
 
 const schema = z.object({
   difficulty: z.enum(["easy", "medium", "hard", "expert"]),
@@ -157,6 +158,16 @@ export async function POST(request: NextRequest) {
     difficulty,
     "English",
   );
+
+  await QuestionSetModel.insertMany([
+    {
+      questions,
+      totalCount: questions.length,
+      title: documentFromDb.originalName,
+      documentId: documentFromDb._id,
+      userId: userId,
+    },
+  ]);
 
   if (questions.length === 0) {
     return Response.json(

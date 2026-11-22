@@ -2,6 +2,7 @@
 
 import {
   ArrowRight,
+  CircleCheck,
   FileStack,
   FileUp,
   ListChecks,
@@ -20,9 +21,10 @@ import {
 } from "@/components/ui/select";
 import { SignUpDialog } from "@/components/sign-up-dialog";
 import { useAuth } from "@/providers/auth-provider";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useRef } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
+import { Question } from "@/lib/rag";
 
 const errorResponseSchema = z.object({ message: z.string().optional() });
 const difficultySchema = z.enum(["easy", "medium", "hard"]);
@@ -54,27 +56,29 @@ export default function Home() {
   const [difficulty, setDifficulty] =
     useState<z.infer<typeof difficultySchema>>("medium");
   const [questionCount, setQuestionCount] = useState<number | "">(5);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  async function uploadDocument(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const file = formData.get("file");
-
+  async function uploadDocument() {
     if (!user) {
       toast.error("Please sign in to upload a document.");
       return;
     }
-    if (!(file instanceof File) || !file.name) {
-      toast.error("Please choose a document.");
+
+    if (!file) {
+      toast.error("Please select a file to upload.");
       return;
     }
+
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File must not exceed 10 MiB.");
       return;
     }
 
-    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
     try {
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -95,13 +99,13 @@ export default function Home() {
 
       const data = uploadResponseSchema.parse(await response.json());
       setDocument(data.document);
-      form.reset();
       toast.success("Document uploaded successfully");
     } catch (error) {
       console.error("Failed to upload document", error);
       toast.error("Failed to upload document. Please try again.");
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -134,8 +138,10 @@ export default function Home() {
         return;
       }
 
-      const data = await response.json();
-      console.log(data);
+      const data: { success: true; questions: Question[] } =
+        await response.json();
+
+      setQuestions(data.questions);
     } finally {
       setIsGenerating(false);
     }
@@ -162,41 +168,58 @@ export default function Home() {
             <p className="mt-2 text-sm text-muted-foreground">
               Choose a document to add to your workspace.
             </p>
-            <form className="mt-6 space-y-4" onSubmit={uploadDocument}>
-              <div className="space-y-2">
-                <label htmlFor="document-file" className="text-sm font-medium">
-                  Document
-                </label>
-                <Input
-                  id="document-file"
-                  name="file"
-                  type="file"
-                  accept=".pdf,.docx,.md,.markdown,.txt"
-                  required
-                  disabled={isUploading || isGenerating}
-                  aria-describedby="document-file-help"
-                  className="h-auto min-h-11 py-2"
-                />
-                <p
-                  id="document-file-help"
-                  className="text-xs text-muted-foreground"
-                >
-                  PDF, DOCX, Markdown or TXT, up to 10 MiB.
-                </p>
-              </div>
-              <Button
-                type="submit"
-                className="w-full"
+            <label
+              htmlFor="document-file"
+              className={`relative mt-5 flex min-h-48 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-violet-500/30 bg-background/50 p-6 text-center transition-colors focus-within:ring-2 focus-within:ring-violet-500 ${
+                isUploading || isGenerating
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-pointer hover:border-violet-500/60"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                id="document-file"
+                name="file"
+                type="file"
+                accept=".pdf,.docx,.md,.markdown,.txt"
+                onChange={(event) => {
+                  const selectedFile = event.currentTarget.files?.[0] ?? null;
+                  if (!selectedFile) return;
+                  setFile(selectedFile);
+                }}
                 disabled={isUploading || isGenerating}
+                aria-describedby="document-file-help"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+              />
+              {file ? (
+                <CircleCheck
+                  aria-hidden="true"
+                  className="size-10 text-green-600"
+                />
+              ) : (
+                <FileUp
+                  aria-hidden="true"
+                  className="size-10 text-violet-600"
+                />
+              )}
+              <span
+                className="max-w-full break-all text-sm font-medium"
+                role="status"
               >
-                {isUploading ? "Uploading..." : "Upload document"}
-              </Button>
-            </form>
-            {document && (
-              <p className="mt-4 text-sm text-muted-foreground" role="status">
-                Uploaded: {document.originalName}
+                {isUploading
+                  ? "Uploading..."
+                  : file
+                    ? file.name
+                    : "Choose a document"}
+              </span>
+              <p
+                id="document-file-help"
+                className="text-xs text-muted-foreground"
+              >
+                PDF, DOCX, Markdown or TXT, up to 10 MiB.
               </p>
-            )}
+            </label>
+            <br />
           </section>
           <section
             aria-labelledby="configure-generation-title"
@@ -239,8 +262,8 @@ export default function Home() {
                   id="question-count"
                   name="questionCount"
                   type="number"
-                  min={1}
-                  max={50}
+                  min={5}
+                  max={10}
                   step={1}
                   value={questionCount}
                   onChange={(event) => {
@@ -252,16 +275,26 @@ export default function Home() {
               </div>
             </div>
           </section>
-          <section>
-            <Button
-              type="button"
-              title="Exam generation is not available yet"
-              className="h-11 w-full bg-linear-to-r from-violet-600 to-sky-600 text-white"
-              onMouseUp={generateQuestions}
-              disabled={isGenerating || isUploading}
-            >
-              Generate exam
-            </Button>
+          <section className="flex items-center">
+            {file && !document && (
+              <Button
+                className="mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
+                onMouseUp={uploadDocument}
+              >
+                Upload Document
+              </Button>
+            )}
+
+            {document && (
+              <Button
+                type="button"
+                className="ml-auto h-11 bg-linear-to-r from-violet-600 to-sky-600 px-6 text-white"
+                onClick={generateQuestions}
+                disabled={isGenerating || isUploading || document == null}
+              >
+                Generate Questions
+              </Button>
+            )}
           </section>
         </div>
         <div aria-hidden="true" className="grid grid-rows-3 gap-4">
