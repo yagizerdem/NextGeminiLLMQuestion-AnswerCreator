@@ -24,8 +24,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SignUpDialog } from "@/components/sign-up-dialog";
+import { QuestionSetDisplay } from "@/components/question-set-display";
 import { useAuth } from "@/providers/auth-provider";
-import { useState, type FormEvent, useRef, useEffect, useMemo } from "react";
+import {
+  useState,
+  type FormEvent,
+  useRef,
+  useEffect,
+  useMemo,
+  Fragment,
+} from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { IQuestionSet } from "@/models/questionset";
@@ -60,6 +68,9 @@ export default function Home() {
   const [questionSets, setQuestionSets] = useState<IQuestionSet[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [questionSetDisplayId, setQuestionSetDisplayId] = useState<
+    string | null
+  >("6b035528235df623bb8cc1fd");
 
   async function uploadDocument() {
     if (!user) {
@@ -186,342 +197,369 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full flex-1 bg-background bg-linear-to-br from-violet-500/10 via-transparent to-emerald-500/10 px-4 py-10 sm:px-6 lg:py-14">
-      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
-        <div className="flex flex-col gap-6 lg:flex-col">
-          <section
-            aria-labelledby="upload-document-title"
-            className="w-full rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-violet-500/10 sm:p-8"
-          >
-            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
-              <FileUp aria-hidden="true" className="size-5" />
-            </div>
-            <h1 id="upload-document-title" className="text-2xl font-semibold">
-              Upload a document
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Choose a document to add to your workspace.
-            </p>
-            <label
-              htmlFor="document-file"
-              className={`relative mt-5 flex min-h-48 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-violet-500/30 bg-background/50 p-6 text-center transition-colors focus-within:ring-2 focus-within:ring-violet-500 ${
-                isUploading || isGenerating
-                  ? "cursor-not-allowed opacity-50"
-                  : "cursor-pointer hover:border-violet-500/60"
-              }`}
+    <Fragment>
+      {questionSetDisplayId && (
+        <QuestionSetDisplay
+          _id={questionSetDisplayId}
+          onClose={() => setQuestionSetDisplayId(null)}
+        />
+      )}
+      <div className="w-full flex-1 bg-background bg-linear-to-br from-violet-500/10 via-transparent to-emerald-500/10 px-4 py-10 sm:px-6 lg:py-14">
+        <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
+          <div className="flex flex-col gap-6 lg:flex-col">
+            <section
+              aria-labelledby="upload-document-title"
+              className="w-full rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-violet-500/10 sm:p-8"
             >
-              <input
-                ref={fileInputRef}
-                id="document-file"
-                name="file"
-                type="file"
-                accept=".pdf,.docx,.md,.markdown,.txt"
-                onChange={(event) => {
-                  const selectedFile = event.currentTarget.files?.[0] ?? null;
-                  if (!selectedFile) return;
-                  setFile(selectedFile);
-                  setDocument(null); // clear old document reference
-                }}
-                disabled={isUploading || isGenerating}
-                aria-describedby="document-file-help"
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
-              />
-              {file ? (
-                <CircleCheck
-                  aria-hidden="true"
-                  className="size-10 text-green-600"
-                />
-              ) : (
-                <FileUp
-                  aria-hidden="true"
-                  className="size-10 text-violet-600"
-                />
-              )}
-              <span
-                className="max-w-full break-all text-sm font-medium"
-                role="status"
-              >
-                {isUploading
-                  ? "Uploading..."
-                  : file
-                    ? file.name
-                    : "Choose a document"}
-              </span>
-              <p
-                id="document-file-help"
-                className="text-xs text-muted-foreground"
-              >
-                PDF, DOCX, Markdown or TXT, up to 10 MiB.
+              <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
+                <FileUp aria-hidden="true" className="size-5" />
+              </div>
+              <h1 id="upload-document-title" className="text-2xl font-semibold">
+                Upload a document
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Choose a document to add to your workspace.
               </p>
-            </label>
-            <br />
-          </section>
-          <section
-            aria-labelledby="configure-generation-title"
-            className="w-full rounded-3xl border border-sky-500/20 bg-card p-6 text-card-foreground shadow-sm sm:p-8"
-          >
-            <h2
-              id="configure-generation-title"
-              className="text-lg font-semibold"
-            >
-              Configure generation
-            </h2>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div className="min-w-0 space-y-2">
-                <label htmlFor="question-level" className="text-sm font-medium">
-                  Question level
-                </label>
-                <Select
-                  name="difficulty"
-                  value={difficulty}
-                  onValueChange={(value) => setDifficulty(value as any)}
-                >
-                  <SelectTrigger id="question-level" className="w-full">
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                    <SelectItem value="expert">Expert</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="min-w-0 space-y-2">
-                <label htmlFor="question-count" className="text-sm font-medium">
-                  Question count
-                </label>
-                <Input
-                  id="question-count"
-                  name="questionCount"
-                  type="number"
-                  min={5}
-                  max={10}
-                  step={1}
-                  value={questionCount}
+              <label
+                htmlFor="document-file"
+                className={`relative mt-5 flex min-h-48 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-violet-500/30 bg-background/50 p-6 text-center transition-colors focus-within:ring-2 focus-within:ring-violet-500 ${
+                  isUploading || isGenerating
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer hover:border-violet-500/60"
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  id="document-file"
+                  name="file"
+                  type="file"
+                  accept=".pdf,.docx,.md,.markdown,.txt"
                   onChange={(event) => {
-                    const value = event.currentTarget.valueAsNumber;
-                    setQuestionCount(Number.isNaN(value) ? "" : value);
+                    const selectedFile = event.currentTarget.files?.[0] ?? null;
+                    if (!selectedFile) return;
+                    setFile(selectedFile);
+                    setDocument(null); // clear old document reference
                   }}
-                  placeholder="e.g. 10"
+                  disabled={isUploading || isGenerating}
+                  aria-describedby="document-file-help"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                 />
-              </div>
-            </div>
-          </section>
-          <section className="flex items-center">
-            {file && !document && (
-              <Button
-                className="mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
-                onMouseUp={uploadDocument}
-              >
-                Upload Document
-              </Button>
-            )}
-
-            {document && (
-              <Button
-                type="button"
-                className="ml-auto h-11 bg-linear-to-r from-violet-600 to-sky-600 px-6 text-white"
-                onClick={generateQuestions}
-                disabled={
-                  isGenerating ||
-                  isUploading ||
-                  isRefreshing ||
-                  document == null
-                }
-              >
-                Generate Questions
-              </Button>
-            )}
-          </section>
-          <section aria-labelledby="question-sets-title">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 id="question-sets-title" className="text-lg font-semibold">
-                Question sets
-              </h2>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={refreshQuestionSets}
-                disabled={isRefreshing || isGenerating}
-              >
-                <RefreshCw
-                  aria-hidden="true"
-                  className={isRefreshing ? "animate-spin" : ""}
-                />
-                {isRefreshing ? "Refreshing..." : "Refresh"}
-              </Button>
-            </div>
-            <ul className="flex flex-col gap-3">
-              {questionSets.map((questionSet) => (
-                <li
-                  key={questionSet._id}
-                  className="flex items-center gap-4 rounded-2xl border border-violet-500/15 bg-card p-4 shadow-sm sm:p-5"
-                >
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-violet-500/15 to-sky-500/15 text-violet-600 dark:text-violet-300">
-                    <ListChecks aria-hidden="true" className="size-6" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="break-words text-base font-semibold">
-                      {questionSet.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Question set
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                    {questionSet.totalCount} questions
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-        <div className="flex flex-col gap-4">
-          <section
-            aria-labelledby="generation-details-title"
-            className="min-h-36 rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-violet-500/10 sm:p-8"
-          >
-            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
-              <Sparkles aria-hidden="true" className="size-5" />
-            </div>
-            <h2 id="generation-details-title" className="text-lg font-semibold">
-              Generation details
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              A quick overview of your question workspace.
-            </p>
-            <dl className="mt-5 space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <Cpu
-                    aria-hidden="true"
-                    className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
-                  />
-                  AI engine
-                </dt>
-                <dd className="text-right font-medium text-violet-700 dark:text-violet-300">
-                  Gemini 3.5 Flash Lite
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <Clock3
-                    aria-hidden="true"
-                    className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
-                  />
-                  Processing speed
-                </dt>
-                <dd className="text-right font-medium">Varies by document</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <FileStack
-                    aria-hidden="true"
-                    className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
-                  />
-                  Export formats
-                </dt>
-                <dd className="rounded-full bg-sky-500/10 px-2.5 py-1 text-right text-xs font-medium text-sky-700 dark:text-sky-300">
-                  In development
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <FileUp
-                    aria-hidden="true"
-                    className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
-                  />
-                  Input formats
-                </dt>
-                <dd className="text-right font-medium">
-                  PDF, DOCX, Markdown, TXT
-                </dd>
-              </div>
-            </dl>
-          </section>
-          <section
-            aria-labelledby="workspace-stats-title"
-            className="h-fit rounded-3xl border border-sky-500/20 bg-card bg-linear-to-br from-sky-500/10 via-transparent to-emerald-500/10 p-3 text-card-foreground shadow-xl shadow-sky-500/10"
-          >
-            <h2 id="workspace-stats-title" className="text-lg font-semibold">
-              Quick Stats
-            </h2>
-            <dl className="mt-3 space-y-1">
-              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                <dt className="text-xs text-muted-foreground">
-                  Total questions
-                </dt>
-                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
-                  {stats.totalQuestions}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                <dt className="text-xs text-muted-foreground">
-                  Processed documents
-                </dt>
-                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
-                  {stats.totalProcessedDocs}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                <dt className="text-xs text-muted-foreground">Question sets</dt>
-                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
-                  {stats.totalQuestionSets}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                <dt className="text-xs text-muted-foreground">Sessions</dt>
-                <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
-                  {stats.totalSessions}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
-                <dt className="text-xs text-muted-foreground">
-                  Average questions per session
-                </dt>
-                <dd className="shrink-0 text-right text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
-                  {stats.avgQuestionsPerSession.toFixed(1)}
-                </dd>
-              </div>
-            </dl>
-          </section>
-          <section
-            aria-labelledby="pro-tips-title"
-            className="min-h-fit rounded-3xl border border-emerald-500/20 bg-card bg-linear-to-br from-emerald-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-emerald-500/10 sm:p-8"
-          >
-            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500/20 to-sky-500/20 text-emerald-700 dark:text-emerald-300">
-              <Lightbulb aria-hidden="true" className="size-5" />
-            </div>
-            <h2 id="pro-tips-title" className="text-lg font-semibold">
-              Pro tips
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Get more out of your question sets.
-            </p>
-            <ul className="mt-5 space-y-3">
-              {[
-                "Use clear, well-structured documents to give the AI useful context.",
-                "Choose a difficulty level that matches your learning goals.",
-                "Keep uploads under 10 MiB and use PDF, DOCX, Markdown, or TXT.",
-                "Review generated questions and answers against your source material.",
-              ].map((tip) => (
-                <li
-                  key={tip}
-                  className="flex gap-3 rounded-xl border border-emerald-500/10 bg-background/60 p-3 text-sm text-muted-foreground"
-                >
+                {file ? (
                   <CircleCheck
                     aria-hidden="true"
-                    className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300"
+                    className="size-10 text-green-600"
                   />
-                  <span>{tip}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+                ) : (
+                  <FileUp
+                    aria-hidden="true"
+                    className="size-10 text-violet-600"
+                  />
+                )}
+                <span
+                  className="max-w-full break-all text-sm font-medium"
+                  role="status"
+                >
+                  {isUploading
+                    ? "Uploading..."
+                    : file
+                      ? file.name
+                      : "Choose a document"}
+                </span>
+                <p
+                  id="document-file-help"
+                  className="text-xs text-muted-foreground"
+                >
+                  PDF, DOCX, Markdown or TXT, up to 10 MiB.
+                </p>
+              </label>
+              <br />
+            </section>
+            <section
+              aria-labelledby="configure-generation-title"
+              className="w-full rounded-3xl border border-sky-500/20 bg-card p-6 text-card-foreground shadow-sm sm:p-8"
+            >
+              <h2
+                id="configure-generation-title"
+                className="text-lg font-semibold"
+              >
+                Configure generation
+              </h2>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="min-w-0 space-y-2">
+                  <label
+                    htmlFor="question-level"
+                    className="text-sm font-medium"
+                  >
+                    Question level
+                  </label>
+                  <Select
+                    name="difficulty"
+                    value={difficulty}
+                    onValueChange={(value) => setDifficulty(value as any)}
+                  >
+                    <SelectTrigger id="question-level" className="w-full">
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                      <SelectItem value="expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <label
+                    htmlFor="question-count"
+                    className="text-sm font-medium"
+                  >
+                    Question count
+                  </label>
+                  <Input
+                    id="question-count"
+                    name="questionCount"
+                    type="number"
+                    min={5}
+                    max={10}
+                    step={1}
+                    value={questionCount}
+                    onChange={(event) => {
+                      const value = event.currentTarget.valueAsNumber;
+                      setQuestionCount(Number.isNaN(value) ? "" : value);
+                    }}
+                    placeholder="e.g. 10"
+                  />
+                </div>
+              </div>
+            </section>
+            <section className="flex items-center">
+              {file && !document && (
+                <Button
+                  className="mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
+                  onMouseUp={uploadDocument}
+                >
+                  Upload Document
+                </Button>
+              )}
+
+              {document && (
+                <Button
+                  type="button"
+                  className="ml-auto h-11 bg-linear-to-r from-violet-600 to-sky-600 px-6 text-white"
+                  onClick={generateQuestions}
+                  disabled={
+                    isGenerating ||
+                    isUploading ||
+                    isRefreshing ||
+                    document == null
+                  }
+                >
+                  Generate Questions
+                </Button>
+              )}
+            </section>
+            <section aria-labelledby="question-sets-title">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 id="question-sets-title" className="text-lg font-semibold">
+                  Question sets
+                </h2>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={refreshQuestionSets}
+                  disabled={isRefreshing || isGenerating}
+                >
+                  <RefreshCw
+                    aria-hidden="true"
+                    className={isRefreshing ? "animate-spin" : ""}
+                  />
+                  {isRefreshing ? "Refreshing..." : "Refresh"}
+                </Button>
+              </div>
+              <ul className="flex flex-col gap-3">
+                {questionSets.map((questionSet) => (
+                  <li
+                    key={questionSet._id}
+                    className="flex flex-wrap items-center gap-4 rounded-2xl border border-violet-500/15 bg-card p-4 shadow-sm sm:p-5"
+                  >
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-violet-500/15 to-sky-500/15 text-violet-600 dark:text-violet-300">
+                      <ListChecks aria-hidden="true" className="size-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words text-base font-semibold">
+                        {questionSet.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Question set
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
+                      {questionSet.totalCount} questions
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setQuestionSetDisplayId(questionSet._id)}
+                    >
+                      View
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+          <div className="flex flex-col gap-4">
+            <section
+              aria-labelledby="generation-details-title"
+              className="min-h-36 rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-violet-500/10 sm:p-8"
+            >
+              <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
+                <Sparkles aria-hidden="true" className="size-5" />
+              </div>
+              <h2
+                id="generation-details-title"
+                className="text-lg font-semibold"
+              >
+                Generation details
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                A quick overview of your question workspace.
+              </p>
+              <dl className="mt-5 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <Cpu
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
+                    />
+                    AI engine
+                  </dt>
+                  <dd className="text-right font-medium text-violet-700 dark:text-violet-300">
+                    Gemini 3.5 Flash Lite
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <Clock3
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
+                    />
+                    Processing speed
+                  </dt>
+                  <dd className="text-right font-medium">Varies by document</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <FileStack
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-violet-600 dark:text-violet-300"
+                    />
+                    Export formats
+                  </dt>
+                  <dd className="rounded-full bg-sky-500/10 px-2.5 py-1 text-right text-xs font-medium text-sky-700 dark:text-sky-300">
+                    In development
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-violet-500/10 bg-background/60 p-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <FileUp
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-sky-600 dark:text-sky-300"
+                    />
+                    Input formats
+                  </dt>
+                  <dd className="text-right font-medium">
+                    PDF, DOCX, Markdown, TXT
+                  </dd>
+                </div>
+              </dl>
+            </section>
+            <section
+              aria-labelledby="workspace-stats-title"
+              className="h-fit rounded-3xl border border-sky-500/20 bg-card bg-linear-to-br from-sky-500/10 via-transparent to-emerald-500/10 p-3 text-card-foreground shadow-xl shadow-sky-500/10"
+            >
+              <h2 id="workspace-stats-title" className="text-lg font-semibold">
+                Quick Stats
+              </h2>
+              <dl className="mt-3 space-y-1">
+                <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                  <dt className="text-xs text-muted-foreground">
+                    Total questions
+                  </dt>
+                  <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                    {stats.totalQuestions}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                  <dt className="text-xs text-muted-foreground">
+                    Processed documents
+                  </dt>
+                  <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                    {stats.totalProcessedDocs}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                  <dt className="text-xs text-muted-foreground">
+                    Question sets
+                  </dt>
+                  <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                    {stats.totalQuestionSets}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                  <dt className="text-xs text-muted-foreground">Sessions</dt>
+                  <dd className="shrink-0 text-right text-2xl font-semibold text-sky-700 dark:text-sky-300">
+                    {stats.totalSessions}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-1 rounded-2xl border border-sky-500/10 bg-background/60 p-1">
+                  <dt className="text-xs text-muted-foreground">
+                    Average questions per session
+                  </dt>
+                  <dd className="shrink-0 text-right text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
+                    {stats.avgQuestionsPerSession.toFixed(1)}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+            <section
+              aria-labelledby="pro-tips-title"
+              className="min-h-fit rounded-3xl border border-emerald-500/20 bg-card bg-linear-to-br from-emerald-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-emerald-500/10 sm:p-8"
+            >
+              <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500/20 to-sky-500/20 text-emerald-700 dark:text-emerald-300">
+                <Lightbulb aria-hidden="true" className="size-5" />
+              </div>
+              <h2 id="pro-tips-title" className="text-lg font-semibold">
+                Pro tips
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Get more out of your question sets.
+              </p>
+              <ul className="mt-5 space-y-3">
+                {[
+                  "Use clear, well-structured documents to give the AI useful context.",
+                  "Choose a difficulty level that matches your learning goals.",
+                  "Keep uploads under 10 MiB and use PDF, DOCX, Markdown, or TXT.",
+                  "Review generated questions and answers against your source material.",
+                ].map((tip) => (
+                  <li
+                    key={tip}
+                    className="flex gap-3 rounded-xl border border-emerald-500/10 bg-background/60 p-3 text-sm text-muted-foreground"
+                  >
+                    <CircleCheck
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300"
+                    />
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
+    </Fragment>
   );
 }
 
