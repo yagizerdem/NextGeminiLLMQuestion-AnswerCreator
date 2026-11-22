@@ -1,4 +1,6 @@
-import { jwtVerify, SignJWT } from "jose";
+import { errors, jwtVerify, SignJWT } from "jose";
+import { isObjectIdOrHexString } from "mongoose";
+import type { NextRequest } from "next/server";
 import { HttpStatusCode } from "./utils";
 import { NextResponse } from "next/dist/server/web/spec-extension/response";
 
@@ -27,6 +29,20 @@ export async function verifyAuthToken(token: string, secret: Uint8Array) {
     requiredClaims: ["sub", "exp"],
   });
   return payload;
+}
+
+export async function getAuthenticatedUserId(request: NextRequest) {
+  const token = request.cookies.get("token")?.value;
+  if (!token) return null;
+
+  const secret = getJwtSecret();
+  try {
+    const { sub } = await verifyAuthToken(token, secret);
+    return sub && isObjectIdOrHexString(sub) ? sub : null;
+  } catch (error) {
+    if (error instanceof errors.JOSEError) return null;
+    throw error;
+  }
 }
 
 export const unauthorized = () =>

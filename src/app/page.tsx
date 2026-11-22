@@ -11,6 +11,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SignUpDialog } from "@/components/sign-up-dialog";
 import { useAuth } from "@/providers/auth-provider";
 import { useState, type FormEvent } from "react";
@@ -18,6 +25,245 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 const errorResponseSchema = z.object({ message: z.string().optional() });
+const difficultySchema = z.enum(["easy", "medium", "hard"]);
+const uploadResponseSchema = z.object({
+  document: z.object({
+    id: z.string(),
+    filename: z.string(),
+    originalName: z.string(),
+    mimeType: z.string(),
+    size: z.number(),
+    status: z.string(),
+  }),
+});
+
+interface Document {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  status: string;
+}
+
+export default function Home() {
+  const { user } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [document, setDocument] = useState<Document | null>(null);
+  const [difficulty, setDifficulty] =
+    useState<z.infer<typeof difficultySchema>>("medium");
+  const [questionCount, setQuestionCount] = useState<number | "">(5);
+
+  async function uploadDocument(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const file = formData.get("file");
+
+    if (!user) {
+      toast.error("Please sign in to upload a document.");
+      return;
+    }
+    if (!(file instanceof File) || !file.name) {
+      toast.error("Please choose a document.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must not exceed 10 MiB.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let message = "Failed to upload document.";
+        if (
+          response.headers.get("content-type")?.includes("application/json")
+        ) {
+          const error = errorResponseSchema.safeParse(await response.json());
+          if (error.success && error.data.message) message = error.data.message;
+        }
+        toast.error(message);
+        return;
+      }
+
+      const data = uploadResponseSchema.parse(await response.json());
+      setDocument(data.document);
+      form.reset();
+      toast.success("Document uploaded successfully");
+    } catch (error) {
+      console.error("Failed to upload document", error);
+      toast.error("Failed to upload document. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function generateQuestions() {
+    try {
+      setIsGenerating(true);
+
+      const response = await fetch("/api/questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uploadId: document?.id,
+          difficulty,
+          questionCount,
+        }),
+      });
+
+      if (!response.ok) {
+        toast.error("Failed to generate questions.");
+        return;
+      }
+
+      const data = await response.json();
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  if (!user) {
+    return <HomePage />;
+  }
+
+  return (
+    <div className="w-full flex-1 bg-background bg-linear-to-br from-violet-500/10 via-transparent to-emerald-500/10 px-4 py-10 sm:px-6 lg:py-14">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
+        <div className="flex flex-col gap-6 lg:flex-col">
+          <section
+            aria-labelledby="upload-document-title"
+            className="w-full rounded-3xl border border-violet-500/20 bg-card bg-linear-to-br from-violet-500/10 via-transparent to-sky-500/10 p-6 text-card-foreground shadow-xl shadow-violet-500/10 sm:p-8"
+          >
+            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500/20 to-sky-500/20 text-violet-700 dark:text-violet-300">
+              <FileUp aria-hidden="true" className="size-5" />
+            </div>
+            <h1 id="upload-document-title" className="text-2xl font-semibold">
+              Upload a document
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Choose a document to add to your workspace.
+            </p>
+            <form className="mt-6 space-y-4" onSubmit={uploadDocument}>
+              <div className="space-y-2">
+                <label htmlFor="document-file" className="text-sm font-medium">
+                  Document
+                </label>
+                <Input
+                  id="document-file"
+                  name="file"
+                  type="file"
+                  accept=".pdf,.docx,.md,.markdown,.txt"
+                  required
+                  disabled={isUploading || isGenerating}
+                  aria-describedby="document-file-help"
+                  className="h-auto min-h-11 py-2"
+                />
+                <p
+                  id="document-file-help"
+                  className="text-xs text-muted-foreground"
+                >
+                  PDF, DOCX, Markdown or TXT, up to 10 MiB.
+                </p>
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isUploading || isGenerating}
+              >
+                {isUploading ? "Uploading..." : "Upload document"}
+              </Button>
+            </form>
+            {document && (
+              <p className="mt-4 text-sm text-muted-foreground" role="status">
+                Uploaded: {document.originalName}
+              </p>
+            )}
+          </section>
+          <section
+            aria-labelledby="configure-generation-title"
+            className="w-full rounded-3xl border border-sky-500/20 bg-card p-6 text-card-foreground shadow-sm sm:p-8"
+          >
+            <h2
+              id="configure-generation-title"
+              className="text-lg font-semibold"
+            >
+              Configure generation
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="min-w-0 space-y-2">
+                <label htmlFor="question-level" className="text-sm font-medium">
+                  Question level
+                </label>
+                <Select
+                  name="difficulty"
+                  value={difficulty}
+                  onValueChange={(value) =>
+                    setDifficulty(difficultySchema.parse(value))
+                  }
+                >
+                  <SelectTrigger id="question-level" className="w-full">
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
+                    <SelectItem value="expert">Expert</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-0 space-y-2">
+                <label htmlFor="question-count" className="text-sm font-medium">
+                  Question count
+                </label>
+                <Input
+                  id="question-count"
+                  name="questionCount"
+                  type="number"
+                  min={1}
+                  max={50}
+                  step={1}
+                  value={questionCount}
+                  onChange={(event) => {
+                    const value = event.currentTarget.valueAsNumber;
+                    setQuestionCount(Number.isNaN(value) ? "" : value);
+                  }}
+                  placeholder="e.g. 10"
+                />
+              </div>
+            </div>
+          </section>
+          <section>
+            <Button
+              type="button"
+              title="Exam generation is not available yet"
+              className="h-11 w-full bg-linear-to-r from-violet-600 to-sky-600 text-white"
+              onMouseUp={generateQuestions}
+              disabled={isGenerating || isUploading}
+            >
+              Generate exam
+            </Button>
+          </section>
+        </div>
+        <div aria-hidden="true" className="grid grid-rows-3 gap-4">
+          <div className="min-h-36 rounded-3xl border border-violet-500/20 bg-card shadow-sm" />
+          <div className="min-h-36 rounded-3xl border border-sky-500/20 bg-card shadow-sm" />
+          <div className="min-h-36 rounded-3xl border border-emerald-500/20 bg-card shadow-sm" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const features = [
   {
@@ -73,13 +319,7 @@ const exampleExportFormats = [
   { name: "JSON", description: "Structured data for other applications." },
 ];
 
-const userSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  username: z.string(),
-});
-
-export default function Home() {
+function HomePage() {
   const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

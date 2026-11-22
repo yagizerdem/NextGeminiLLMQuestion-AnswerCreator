@@ -33,6 +33,21 @@ Local file storage uses the `uploads` directory in the project root. The
 directory is created on first use and ignored by Git. Saving a file with an
 existing name overwrites it.
 
+`POST /api/upload` requires a signed-in user and a multipart form field named
+`file`. It accepts files with PDF, DOCX, MD, Markdown or TXT extensions up to
+10 MiB. The extension is checked, not the file's contents. With
+`STORAGE_STRATEGY=local`, the file is stored in `uploads`; with
+`STORAGE_STRATEGY=database`, its contents are stored in MongoDB. Both strategies
+create a document record.
+
+`DocParser` accepts file contents as a `Buffer`. Its PDF and DOCX methods are
+asynchronous; TXT and Markdown methods read UTF-8 text synchronously. PDF page
+counts come from the document, and DOCX counts come from its stored metadata
+and may be outdated. Files without a page count return `pages: 0`. Markdown is
+returned as source text; scanned PDFs require OCR.
+Call `cleanText` to normalize line breaks and remove control characters and
+excess blank lines before chunking; parsing does not clean text automatically.
+
 First, run the development server:
 
 ```bash

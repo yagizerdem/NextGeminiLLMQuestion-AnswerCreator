@@ -31,3 +31,8 @@ export async function saveLocalFile(
   await writeFile(filePath, buffer);
   return filePath;
 }
+
+export async function readLocalFile(fileName: string): Promise<Buffer> {
+  const filePath = path.join(UPLOADS_DIR, fileName);
+  return await import("fs/promises").then(({ readFile }) => readFile(filePath));
+}
