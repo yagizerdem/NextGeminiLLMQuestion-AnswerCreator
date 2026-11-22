@@ -17,15 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -237,39 +235,52 @@ export default function Home() {
 
   return (
     <Fragment>
-      <AlertDialog
+      <Dialog
         open={questionSetToDelete !== null}
         onOpenChange={(open) => {
           if (!open && !deletingId) setQuestionSetToDelete(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete question set?</AlertDialogTitle>
-            <AlertDialogDescription>
+        <DialogContent
+          showCloseButton={false}
+          onPointerDownOutside={(event) => {
+            if (deletingId) event.preventDefault();
+          }}
+          onEscapeKeyDown={(event) => {
+            if (deletingId) event.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Delete question set?</DialogTitle>
+            <DialogDescription>
               Delete &quot;{questionSetToDelete?.title}&quot;? This action
               cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingId !== null}>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deletingId !== null}
+              onClick={() => setQuestionSetToDelete(null)}
+            >
               Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
+            </Button>
+            <Button
+              type="button"
               variant="destructive"
               disabled={deletingId !== null}
-              onClick={(event) => {
-                event.preventDefault();
+              onClick={() => {
                 if (questionSetToDelete) {
                   void deleteQuestionSet(questionSetToDelete);
                 }
               }}
             >
               {deletingId ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {questionSetDisplayId && (
         <QuestionSetDisplay
           _id={questionSetDisplayId}

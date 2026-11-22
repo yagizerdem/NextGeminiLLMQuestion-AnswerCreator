@@ -10,6 +10,13 @@ export interface IQuestionSet {
   userId: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  metadata: {
+    generationMethod: string;
+    documentLength: number;
+    generatedAt: Date;
+    ragEnabled: boolean;
+    aiModel: string;
+  };
 }
 
 const questionSetSchema = new Schema<IQuestionSet>(
@@ -39,6 +46,13 @@ const questionSetSchema = new Schema<IQuestionSet>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    metadata: {
+      generationMethod: { type: String, default: "" },
+      documentLength: { type: Number, default: 0 },
+      generatedAt: { type: Date, default: Date.now },
+      ragEnabled: { type: Boolean, default: false },
+      aiModel: { type: String, default: "" },
     },
   },
   { timestamps: true },

@@ -222,6 +222,8 @@ export class SimpleVectorStore {
 }
 
 export class RagService {
+  public readonly model = "gemini-3.5-flash-lite";
+
   constructor(private geminiApiKey: string) {}
 
   private async splitTextIntoChunks(
@@ -315,7 +317,6 @@ export class RagService {
       );
     }
 
-    const model = "gemini-3.5-flash-lite";
     const ai = new GoogleGenAI({ apiKey: this.geminiApiKey });
     const questions: Question[] = [];
     let attemptsWithoutProgress = 0;
@@ -343,7 +344,7 @@ Avoid repeating the previously generated questions supplied in the input.`;
       let response;
       try {
         response = await ai.models.generateContent({
-          model,
+          model: this.model,
           contents: JSON.stringify({
             numberOfQuestions: batchSize,
             difficulty,

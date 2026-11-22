@@ -38,7 +38,7 @@ export function QuestionSetGridView({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="flex h-dvh w-screen max-w-none flex-col gap-0 rounded-none bg-background p-0 sm:max-w-none">
-        <DialogHeader className="shrink-0 border-b bg-card px-6 py-5 pr-14 sm:px-8 sm:pr-14">
+        <DialogHeader className="shrink-0 flex-row items-center gap-4 border-b bg-card px-6 py-5 pr-14 sm:px-8 sm:pr-14">
           <Button
             type="button"
             variant="ghost"
@@ -48,12 +48,14 @@ export function QuestionSetGridView({
             <ArrowLeft aria-hidden="true" className="size-4" />
             Back
           </Button>
-          <DialogTitle className="text-xl font-semibold">
-            All question sets
-          </DialogTitle>
-          <DialogDescription>
-            {questionSets.length} question sets
-          </DialogDescription>
+          <div className="min-w-0 space-y-1">
+            <DialogTitle className="text-xl font-semibold">
+              All question sets
+            </DialogTitle>
+            <DialogDescription>
+              {questionSets.length} question sets
+            </DialogDescription>
+          </div>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           {questionSets.length === 0 ? (
@@ -61,7 +63,7 @@ export function QuestionSetGridView({
               No question sets yet.
             </p>
           ) : (
-            <ul className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {questionSets.map((questionSet) => {
                 const createdAt = new Date(questionSet.createdAt);
                 const hasValidDate = !Number.isNaN(createdAt.getTime());
@@ -97,10 +99,10 @@ export function QuestionSetGridView({
                         "Creation date unavailable"
                       )}
                     </p>
-                    <div className="mt-auto flex gap-2">
+                    <div className="mt-auto flex flex-col gap-2">
                       <Button
                         type="button"
-                        className="group h-10 flex-1 bg-linear-to-r from-violet-600 to-blue-500 font-semibold text-white shadow-sm hover:from-violet-700 hover:to-blue-600"
+                        className="group h-10 w-full bg-linear-to-r from-violet-600 to-blue-500 font-semibold text-white shadow-sm hover:from-violet-700 hover:to-blue-600"
                         onClick={() => setSelectedId(questionSet._id)}
                       >
                         View
@@ -112,7 +114,7 @@ export function QuestionSetGridView({
                       <Button
                         type="button"
                         variant="destructive"
-                        className="h-10"
+                        className="h-10 w-full border-destructive/20"
                         aria-label={`Delete ${questionSet.title}`}
                         disabled={isRefreshing || deletingId !== null}
                         onClick={() => onDelete(questionSet)}

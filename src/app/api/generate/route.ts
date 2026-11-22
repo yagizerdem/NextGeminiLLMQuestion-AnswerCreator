@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
   const user = await User.findById(userId).select("+geminiToken");
   if (!user) return unauthorized();
 
+  if (documentFromDb.userId.toString() !== userId) {
+    return Response.json(
+      { message: "Unauthorized access to the document." },
+      { status: HttpStatusCode.UNAUTHORIZED },
+    );
+  }
+
   const userKey = user.geminiToken?.trim();
   const effectiveKey = userKey || process.env.GEMINI_API_KEY?.trim();
 
@@ -172,6 +179,13 @@ export async function POST(request: NextRequest) {
     title: documentFromDb.originalName,
     documentId: documentFromDb._id,
     userId,
+    metadata: {
+      generationMethod: "rag",
+      documentLength: cleanedText.length,
+      generatedAt: new Date(),
+      ragEnabled: true,
+      aiModel: ragService.model,
+    },
   });
 
   return new Response(JSON.stringify({ success: true, questionSet }), {
