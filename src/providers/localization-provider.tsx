@@ -10,8 +10,10 @@ import {
 } from "react";
 import en from "@/assets/l10n/en.json";
 import tr from "@/assets/l10n/tr.json";
+import nl from "@/assets/l10n/nl.json";
+import ru from "@/assets/l10n/ru.json";
 
-export type Language = "en" | "tr";
+export type Language = "en" | "tr" | "nl" | "ru";
 export type TranslationKey = keyof typeof en;
 export type Translate = (
   key: TranslationKey,
@@ -21,19 +23,22 @@ export type Translate = (
 const dictionaries: Record<Language, Record<TranslationKey, string>> = {
   en,
   tr,
+  nl,
+  ru,
 };
 const storageKey = "gemini-qa-language";
 const listeners = new Set<() => void>();
 let sessionLanguage: Language | undefined;
 
 export function isLanguage(value: unknown): value is Language {
-  return value === "en" || value === "tr";
+  return value === "en" || value === "tr" || value === "nl" || value === "ru";
 }
 
 function getLanguage(): Language {
   if (sessionLanguage) return sessionLanguage;
   try {
-    return localStorage.getItem(storageKey) === "tr" ? "tr" : "en";
+    const stored = localStorage.getItem(storageKey);
+    return isLanguage(stored) ? stored : "en";
   } catch {
     return "en";
   }
@@ -103,5 +108,9 @@ export function fullLanguageName(language: Language): string {
       return "english";
     case "tr":
       return "turkish";
+    case "nl":
+      return "dutch";
+    case "ru":
+      return "russian";
   }
 }

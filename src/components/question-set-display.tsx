@@ -1,6 +1,10 @@
 "use client";
 
-import { useLocalization, type Translate, type TranslationKey } from "@/providers/localization-provider";
+import {
+  useLocalization,
+  type Translate,
+  type TranslationKey,
+} from "@/providers/localization-provider";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Download, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -111,7 +115,10 @@ async function downloadPDF(
 
 function localizeDifficulty(difficulty: string, t: Translate) {
   const level = difficulty.trim().toLowerCase();
-  return level === "easy" || level === "medium" || level === "hard" || level === "expert"
+  return level === "easy" ||
+    level === "medium" ||
+    level === "hard" ||
+    level === "expert"
     ? t(level)
     : difficulty;
 }
@@ -125,7 +132,10 @@ async function exportAsPDF(questionSet: IQuestionSet, t: Translate) {
 
   questionSet.questions.forEach((question, index) => {
     const details = [
-      { label: t("difficulty"), value: localizeDifficulty(question.difficulty, t) },
+      {
+        label: t("difficulty"),
+        value: localizeDifficulty(question.difficulty, t),
+      },
       { label: t("category"), value: question.category },
       { label: t("cognitiveLevel"), value: question.cognitive_level },
       { label: t("keywords"), value: question.keywords.join(", ") },
@@ -136,7 +146,10 @@ async function exportAsPDF(questionSet: IQuestionSet, t: Translate) {
     ].filter((detail) => detail.value?.trim());
 
     content.push(
-      { text: t("questionNumber", { count: index + 1 }), style: "questionLabel" },
+      {
+        text: t("questionNumber", { count: index + 1 }),
+        style: "questionLabel",
+      },
       { text: question.question, style: "question" },
       {
         text: [{ text: t("answer") + ": ", bold: true }, question.answer],
@@ -213,7 +226,11 @@ interface ExamDetails {
   instructor: string;
 }
 
-async function exportExamPDF(questionSet: IQuestionSet, details: ExamDetails, t: Translate) {
+async function exportExamPDF(
+  questionSet: IQuestionSet,
+  details: ExamDetails,
+  t: Translate,
+) {
   const studentFields = [
     { label: t("studentName"), value: details.studentName },
     { label: t("studentLastName"), value: details.studentLastName },
@@ -363,7 +380,11 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
         if (!response.ok) {
           if (!controller.signal.aborted) {
             setQuestionSet(null);
-            setError(response.status === 404 ? "questionSetNotFound" : "loadQuestionSetFailed");
+            setError(
+              response.status === 404
+                ? "questionSetNotFound"
+                : "loadQuestionSetFailed",
+            );
           }
           return;
         }
@@ -413,7 +434,11 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default" type="button" variant="outline">
+                  <Button
+                    className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
+                    type="button"
+                    variant="outline"
+                  >
                     <MoreHorizontal aria-hidden="true" className="size-4" />
                     {t("moreOptions")}
                   </Button>
@@ -433,7 +458,9 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={!questionSet || isExporting}
-                    onSelect={() => void handleExport((set) => exportAsPDF(set, t))}
+                    onSelect={() =>
+                      void handleExport((set) => exportAsPDF(set, t))
+                    }
                   >
                     {t("pdfFormat")}
                   </DropdownMenuItem>
@@ -452,7 +479,12 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
           </DialogTitle>
           <DialogDescription>
             {questionSet
-              ? t(questionSet.totalCount === 1 ? "questionCountOne" : "questionCountMany", { count: questionSet.totalCount })
+              ? t(
+                  questionSet.totalCount === 1
+                    ? "questionCountOne"
+                    : "questionCountMany",
+                  { count: questionSet.totalCount },
+                )
               : t("reviewQuestionSet")}
           </DialogDescription>
         </DialogHeader>
@@ -486,7 +518,10 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
               <ol className="space-y-4">
                 {questionSet.questions.map((question, index) => {
                   const details = [
-                    { label: t("sourceContext"), value: question.source_context },
+                    {
+                      label: t("sourceContext"),
+                      value: question.source_context,
+                    },
                     {
                       label: t("followUpPotential"),
                       value: question.follow_up_potential,
@@ -522,7 +557,10 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {[
-                          { label: t("difficulty"), value: localizeDifficulty(question.difficulty, t) },
+                          {
+                            label: t("difficulty"),
+                            value: localizeDifficulty(question.difficulty, t),
+                          },
                           { label: t("category"), value: question.category },
                           {
                             label: t("cognitiveLevel"),
@@ -605,6 +643,21 @@ export function QuestionSetDisplay({ _id, onClose }: QuestionSetDisplayProps) {
           isExporting={isExporting}
           onClose={() => setExamModalOpen(false)}
           onGenerate={async (details) => {
+            if (details.date === "") {
+              toast.error(t("dateRequired"));
+              return;
+            }
+
+            if (details.duration === "") {
+              toast.error(t("durationRequired"));
+              return;
+            }
+
+            if (details.title === "") {
+              toast.error(t("titleRequired"));
+              return;
+            }
+
             const success = await handleExport((set) =>
               exportExamPDF(set, details, t),
             );
@@ -647,9 +700,7 @@ function ExamFormatModal({
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("examFormat")}</DialogTitle>
-          <DialogDescription>
-            {t("examFormHelp")}
-          </DialogDescription>
+          <DialogDescription>{t("examFormHelp")}</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={handleSubmit}
@@ -673,7 +724,9 @@ function ExamFormatModal({
               <Input id="exam-studentName" name="studentName" type="text" />
             </div>
             <div className="flex min-w-0 flex-col gap-2">
-              <label htmlFor="exam-studentLastName">{t("studentLastName")}</label>
+              <label htmlFor="exam-studentLastName">
+                {t("studentLastName")}
+              </label>
               <Input
                 id="exam-studentLastName"
                 name="studentLastName"
@@ -724,7 +777,11 @@ function ExamFormatModal({
             >
               {t("cancel")}
             </Button>
-            <Button className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default" type="submit" disabled={isExporting}>
+            <Button
+              className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
+              type="submit"
+              disabled={isExporting}
+            >
               {isExporting ? t("generating") : t("generateExamPdf")}
             </Button>
           </DialogFooter>

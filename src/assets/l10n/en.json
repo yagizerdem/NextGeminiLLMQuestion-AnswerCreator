@@ -8,6 +8,8 @@
   "language": "Language",
   "english": "English",
   "turkish": "Türkçe",
+  "dutch": "Nederlands",
+  "russian": "Русский",
   "accountMenu": "Account menu for {username}",
   "profile": "Profile",
   "signOut": "Sign out",
@@ -225,5 +227,8 @@
   "apiKeyRequired": "Please enter an API key.",
   "apiKeyTooLong": "API key must be at most 255 characters long.",
   "emailAlreadyInUse": "This email address is already in use.",
-  "invalidEmailOrPassword": "Invalid email or password."
+  "invalidEmailOrPassword": "Invalid email or password.",
+  "dateRequired": "Please enter the exam date.",
+  "durationRequired": "Please enter the exam duration.",
+  "titleRequired": "Please enter the exam title."
 }

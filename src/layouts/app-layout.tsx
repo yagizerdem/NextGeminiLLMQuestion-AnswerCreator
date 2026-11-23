@@ -28,6 +28,8 @@ import { toast } from "sonner";
 const languages = [
   { code: "en", label: "english" },
   { code: "tr", label: "turkish" },
+  { code: "nl", label: "dutch" },
+  { code: "ru", label: "russian" },
 ] as const;
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

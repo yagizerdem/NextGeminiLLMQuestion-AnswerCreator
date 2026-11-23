@@ -26,7 +26,7 @@ const schema = z.object({
   language: z
     .string()
     .toLowerCase()
-    .pipe(z.enum(["english", "turkish"])),
+    .pipe(z.enum(["english", "turkish", "dutch", "russian"])),
 });
 
 export async function POST(request: NextRequest) {

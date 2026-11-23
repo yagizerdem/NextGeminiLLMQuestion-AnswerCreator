@@ -8,6 +8,8 @@
   "language": "Dil",
   "english": "English",
   "turkish": "Türkçe",
+  "dutch": "Nederlands",
+  "russian": "Русский",
   "accountMenu": "{username} için hesap menüsü",
   "profile": "Profil",
   "signOut": "Çıkış yap",
@@ -225,5 +227,8 @@
   "apiKeyRequired": "Lütfen bir API anahtarı girin.",
   "apiKeyTooLong": "API anahtarı en fazla 255 karakter olmalıdır.",
   "emailAlreadyInUse": "Bu e-posta adresi zaten kullanılıyor.",
-  "invalidEmailOrPassword": "E-posta adresi veya şifre geçersiz."
+  "invalidEmailOrPassword": "E-posta adresi veya şifre geçersiz.",
+  "dateRequired": "Lütfen sınav tarihini girin.",
+  "durationRequired": "Lütfen sınav süresini girin.",
+  "titleRequired": "Lütfen sınav başlığını girin."
 }
