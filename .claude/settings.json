@@ -2,5 +2,8 @@
   "attribution": {
     "commit": "yagiz erdem",
     "pr": "yagiz erdem"
+  },
+  "enabledPlugins": {
+    "mongodb-atlas@claude-plugins-official": true
   }
 }
