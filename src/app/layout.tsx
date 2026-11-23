@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { BaseProvider } from "@/providers/base-provider";
 import AppLayout from "@/layouts/app-layout";
 import "./globals.css";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,9 +28,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <BaseProvider>
-          <AppLayout>{children}</AppLayout>
-        </BaseProvider>
+        <Suspense>
+          <BaseProvider>
+            <AppLayout>{children}</AppLayout>
+          </BaseProvider>
+        </Suspense>
       </body>
     </html>
   );

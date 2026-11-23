@@ -9,7 +9,7 @@ import Document from "@/models/document";
 import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 1 * 1024 * 1024;
 const allowedExtensions = new Set([
   ".pdf",
   ".docx",
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   }
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json(
-      { message: "File must not exceed 10 MiB." },
+      { message: "File must not exceed 1 MiB." },
       { status: HttpStatusCode.PAYLOAD_TOO_LARGE },
     );
   }

@@ -102,7 +102,7 @@ export default function Home() {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 1 * 1024 * 1024) {
       toast.error(t("fileTooLarge"));
       return;
     }
@@ -443,6 +443,7 @@ export default function Home() {
                 <Button
                   className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default mr-auto h-11 bg-linear-to-r from-emerald-600 to-teal-600 px-6 text-white"
                   onMouseUp={uploadDocument}
+                  disabled={isUploading}
                 >
                   {t("uploadDocument")}
                 </Button>
