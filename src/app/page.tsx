@@ -489,51 +489,61 @@ export default function Home() {
                 {questionSets.slice(0, 10).map((questionSet) => (
                   <li
                     key={questionSet._id}
-                    className="flex flex-wrap items-center gap-4 rounded-2xl border border-violet-500/15 bg-card p-4 shadow-sm sm:p-5"
+                    className="flex flex-col gap-4 rounded-2xl border border-violet-500/15 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:p-5"
                   >
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-violet-500/15 to-sky-500/15 text-violet-600 dark:text-violet-300">
-                      <ListChecks aria-hidden="true" className="size-6" />
+                    <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-violet-500/15 to-sky-500/15 text-violet-600 sm:size-12 dark:text-violet-300">
+                        <ListChecks
+                          aria-hidden="true"
+                          className="size-5 sm:size-6"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="line-clamp-2 text-base font-semibold wrap-anywhere"
+                          title={questionSet.title}
+                        >
+                          {questionSet.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {t("questionSet")}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="break-words text-base font-semibold">
-                        {questionSet.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("questionSet")}
-                      </p>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="mr-auto rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium whitespace-nowrap text-violet-700 sm:mr-2 dark:text-violet-300">
+                        {t(
+                          questionSet.totalCount === 1
+                            ? "questionCountOne"
+                            : "questionCountMany",
+                          { count: questionSet.totalCount },
+                        )}
+                      </span>
+                      <Button
+                        className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setQuestionSetDisplayId(questionSet._id)}
+                      >
+                        {t("view")}
+                      </Button>
+                      <Button
+                        className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        aria-label={t("deleteNamed", {
+                          title: questionSet.title,
+                        })}
+                        disabled={isRefreshing || deletingId !== null}
+                        onClick={() => setQuestionSetToDelete(questionSet)}
+                      >
+                        {deletingId === questionSet._id
+                          ? t("deleting")
+                          : t("delete")}
+                      </Button>
                     </div>
-                    <span className="shrink-0 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                      {t(
-                        questionSet.totalCount === 1
-                          ? "questionCountOne"
-                          : "questionCountMany",
-                        { count: questionSet.totalCount },
-                      )}
-                    </span>
-                    <Button
-                      className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuestionSetDisplayId(questionSet._id)}
-                    >
-                      {t("view")}
-                    </Button>
-                    <Button
-                      className="cursor-pointer disabled:cursor-default aria-disabled:cursor-default"
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      aria-label={t("deleteNamed", {
-                        title: questionSet.title,
-                      })}
-                      disabled={isRefreshing || deletingId !== null}
-                      onClick={() => setQuestionSetToDelete(questionSet)}
-                    >
-                      {deletingId === questionSet._id
-                        ? t("deleting")
-                        : t("delete")}
-                    </Button>
                   </li>
                 ))}
               </ul>
